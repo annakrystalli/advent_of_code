@@ -1,0 +1,97 @@
+---
+title: "--- Day 1: No Time for a Taxicab ---"
+author: "annakrystalli"
+date: 2017-11-27
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+<!-- Add your analysis here -->
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Load instructions
+
+Load string of step instructions and split into directions (`step_dirs`) and number of steps (`step_dists`)
+
+```{r}
+steps <- readLines("../inputs/dir_input.txt") %>% strsplit(", ") %>% unlist() 
+
+steps_dirs <- gsub("[0-9]", "", steps)
+steps_dists <- gsub("[A-Z]", "", steps) %>% as.numeric()
+```
+
+### Set up table to recode `L` & `R` to compass directions (`N`, `S`, `E`, `W`)
+
+```{r}
+dirs_lat <- c("N", "S")
+dirs_lon <- c("E", "W")
+dirs <- data.frame(facing = c("N", "S", "E", "W"), R = c(dirs_lon, rev(dirs_lat)), L = c(rev(dirs_lon), dirs_lat), stringsAsFactors = F)
+```
+
+### Recode 
+```{r}
+facing <- "N"
+compass_dirs <- NULL
+for(step_dir in steps_dirs){
+   compass_dirs <- c(compass_dirs, dirs[dirs$facing == facing, step_dir])
+   facing <- tail(compass_dirs, 1)
+}
+```
+
+## Calculate overall distance in each direction and sum
+
+```{r}
+tibble(compass_dirs, steps_dists) %>% group_by(compass_dirs) %>% summarise(sum = sum(steps_dists)) %>% mutate(orient = case_when(
+    compass_dirs %in% dirs_lat ~ "lat",
+    TRUE ~ "lon")) %>% 
+    group_by(orient) %>% summarise(diff = diff(sum)) %>% pull(diff) %>% sum
+```
+
+
+#Success!
+
+![](../screenshots/test-Day1_1.png)
