@@ -127,8 +127,11 @@ $(document).ready(function () {
 
 
 <p><strong>Last updated:</strong> 2017-11-29</p>
-<p><strong>Code version:</strong> 2bdd130</p>
+<p><strong>Code version:</strong> 4af3cbe</p>
 <!-- Add your analysis here -->
+<blockquote>
+<p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
+</blockquote>
 <div id="session-information" class="section level2">
 <h2>Session information</h2>
 <!-- Insert the session information into the document -->
@@ -251,6 +254,15 @@ expect_equal(find_code(code_steps_test, 5), c(1,9,8,5))</code></pre>
 </div>
 <div id="part-two" class="section level2">
 <h2>— Part Two —</h2>
+<p>You finally arrive at the bathroom (it’s a several minute walk from the lobby so visitors can behold the many fancy conference rooms and water coolers on this floor) and go to punch in the code. Much to your bladder’s dismay, the keypad is not at all like you imagined it. Instead, you are confronted with the result of hundreds of man-hours of bathroom-keypad-design meetings:</p>
+<pre><code>    1
+  2 3 4
+5 6 7 8 9
+  A B C
+    D   </code></pre>
+<p>You still start at “5” and stop when you’re at an edge, but given the same instructions as above, the outcome is very different:</p>
+<p>You start at “5” and don’t move at all (up and left are both edges), ending at 5. Continuing from “5”, you move right twice and down three times (through “6”, “7”, “B”, “D”, “D”), ending at D. Then, from “D”, you move five more times (through “D”, “B”, “C”, “C”, “B”), ending at B. Finally, after five more moves, you end at 3. So, given the actual keypad layout, the code would be 5DB3.</p>
+<p>Using the same instructions in your puzzle input, what is the correct bathroom code?</p>
 </div>
 <div id="encode-psycho-keypad" class="section level2">
 <h2>Encode psycho keypad</h2>
