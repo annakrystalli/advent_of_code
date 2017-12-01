@@ -1,0 +1,28 @@
+library(httr)
+library(dplyr)
+
+#' get input for a given Advent of Code day puzzle
+#' @param day numeric. Day for which input is required
+#' @param year numeric. Year for which input is required
+#' @param cookie_path character string. Path to the cookie string stored as a text file.
+#' @return Returns user specific input as returned by the advnet of code server.
+#' @details In chrome, get your cookie details by clicking on the triple dot menu
+#' @import dplyr, httr
+#' (top right) > More tools > Developer tools > Application > Cookies. You need to copy the long 
+#' string in the `value` column for row `session`. Save that as a text file. 
+aoc_get_input <- function(day, year = 2017, cookie_path = NULL){
+    if(is.null(cookie_path)){
+        cookie_path <- paste0(rprojroot::find_rstudio_root_file(), 
+                              "/inst/session_cookie.txt")
+        if(!file.exists(readLines(cookie_path))){
+            stop("no file at default at default cookie path, \n please provide valid path")
+        }
+    }
+    # read cookie
+    cookie <- readLines(cookie_path)
+    # get input
+    GET(paste0("https://adventofcode.com/", year,"/day/", day, "/input"), 
+        set_cookies("session" = cookie)) %>%
+        content("text") %>% trimws()
+}
+
