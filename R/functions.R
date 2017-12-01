@@ -10,12 +10,12 @@ library(dplyr)
 #' @import dplyr, httr
 #' (top right) > More tools > Developer tools > Application > Cookies. You need to copy the long 
 #' string in the `value` column for row `session`. Save that as a text file. 
-aoc_get_input <- function(day, year = 2017, cookie_path = NULL){
+aoc_get_input <- function(day, year = 2017, cookie_path = NULL, encoding = "UTF-8"){
     if(is.null(cookie_path)){
         cookie_path <- paste0(rprojroot::find_rstudio_root_file(), 
                               "/inst/session_cookie.txt")
-        if(!file.exists(readLines(cookie_path))){
-            stop("no file at default at default cookie path, \n please provide valid path")
+        if(!file.exists(cookie_path)){
+            stop("no file at default cookie path, \n please provide valid path")
         }
     }
     # read cookie
@@ -23,6 +23,6 @@ aoc_get_input <- function(day, year = 2017, cookie_path = NULL){
     # get input
     GET(paste0("https://adventofcode.com/", year,"/day/", day, "/input"), 
         set_cookies("session" = cookie)) %>%
-        content("text") %>% trimws()
+        content("text", encoding = encoding) %>% trimws()
 }
 
