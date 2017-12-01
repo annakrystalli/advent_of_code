@@ -1,5 +1,7 @@
 # advent_of_code : https://adventofcode.com/
 
+[![Join the chat at https://gitter.im/advent_of_code/Lobby](https://badges.gitter.im/advent_of_code/Lobby.svg)](https://gitter.im/advent_of_code/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 > ‼️ Spoiler Alert ‼️ - vignettes contain answers
 
 
