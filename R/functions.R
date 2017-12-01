@@ -6,8 +6,8 @@ library(dplyr)
 #' @param year numeric. Year for which input is required
 #' @param cookie_path character string. Path to the cookie string stored as a text file.
 #' @return Returns user specific input as returned by the advnet of code server.
-#' @details In chrome, get your cookie details by clicking on the triple dot menu
 #' @import dplyr, httr
+#' @details In chrome, get your cookie details by clicking on the triple dot menu
 #' (top right) > More tools > Developer tools > Application > Cookies. You need to copy the long 
 #' string in the `value` column for row `session`. Save that as a text file. 
 aoc_get_input <- function(day, year = 2017, cookie_path = NULL, encoding = "UTF-8"){
