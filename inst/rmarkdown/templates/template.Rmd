@@ -1,7 +1,7 @@
 ---
-title: "--- Day 1: Inverse Captcha ---"
+title: "--- XXX Puzzle Title XXXX ---"
 author: "annakrystalli"
-date: 2017-12-01
+date: 2017-12-XX
 output: html_document
 ---
 
@@ -58,10 +58,25 @@ sessionInfo()
 
 # Let's go
 
-### Packages
-```{r}
-
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
 ```
+
+With the help of my colleague [**Phil Tooley**](https://twitter.com/acceleratedsci), I've written a function to call the input for each day in directly from the Advent of Code server. It defaults to inputs for `2017` puzzles and to the path I store my **session cookie** at (inputs are user specific so the user needs to know who you are to give you the right input). But you can override that by supplying a different year to `year` or the path to a `.txt` file containing your session cookie to argument `cookie_path`. See function & more details [here](https://github.com/annakrystalli/advent_of_code/blob/master/R/functions.R).
+
+```{r}
+source(paste0(rprojroot::find_rstudio_root_file(), "/R/functions.R"))
+```
+
+
+## Input
+
+```{r}
+aoc_get_input(day = )
+```
+
 
 ## Test
 ```{r}
@@ -92,10 +107,6 @@ sessionInfo()
 
 
 ### Packages
-```{r}
-library(tidyverse)
-library(testthat)
-```
 
 ## Functions
 ```{r}
