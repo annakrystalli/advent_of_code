@@ -11,4 +11,4 @@
 
 ### 2017 is here!
 
--[--- Day 1: Inverse Captcha ---](http://annakrystalli.me/advent_of_code/puzzles/Day1_17.html)
+- [--- Day 1: Inverse Captcha ---](http://annakrystalli.me/advent_of_code/puzzles/Day1_17.html)
