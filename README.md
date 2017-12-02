@@ -28,3 +28,11 @@ About:
 ### 2017 is here 🎄 🎅 ❄️!
 
 - [--- Day 1: Inverse Captcha ---](http://annakrystalli.me/advent_of_code/puzzles/Day1_17.html)
+- [--- Day 2: Corruption Checksum ---](http://annakrystalli.me/advent_of_code/puzzles/Day2_17.html)
+
+
+<br>
+
+## aocoder pkg
+
+I'll be compiling useful resources for the challenges in the [aocodeR](https://github.com/annakrystalli/aocodeR) package. So far I've got a function to get the inputs in directly from the Advent of Code server and a template for my vignettes! 😃
