@@ -127,7 +127,7 @@ $(document).ready(function () {
 
 
 <p><strong>Last updated:</strong> 2017-12-03</p>
-<p><strong>Code version:</strong> 9686889</p>
+<p><strong>Code version:</strong> 905fb98</p>
 <blockquote>
 <p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
 </blockquote>
@@ -270,26 +270,26 @@ sps</code></pre>
 </div>
 <div id="lets-go-1" class="section level1">
 <h1>Let’s go</h1>
-<pre class="r"><code>get_move_value &lt;- function(grid, loc){
-    # filter values which are in the neighbourhood of the location given and sum
+<pre class="r"><code># filter values which are in the neighbourhood of the location given and sum
+get_move_value &lt;- function(grid, loc){
     grid %&gt;% filter(x %in% (-1:1 + loc$x) , y %in% (-1:1 + loc$y)) %&gt;% select(value) %&gt;% sum}
 
 get_value_row &lt;- function(grid){
     last_row &lt;- tail(grid, 1)
     spiral_ &lt;- last_row$spiral # which spiral are we on? Spirals are corner trajectories spaning two axis directions, each of steps equal to spiral
-    spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow # how many steps
-    # have we taken on this spiral. 
+    spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow # how many steps have we taken on this spiral. 
+    
     if(spiral_moves &gt;= (spiral_ * 2)){
         spiral_ &lt;- spiral_ + 1 # shift to next spiral
         spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow # reset the number of steps
     }
+    
     # set the sign of the step in coordinate space
     if(spiral_ %% 2 == 1){sign = +1}else{sign = -1} 
     # set the axis of travel
     if(spiral_moves &lt; spiral_){move &lt;- c(1,0) * sign}else{move &lt;- c(0,1) * sign}
     
     loc &lt;- last_row %&gt;% select(x,y) + move
-    
     grid %&gt;% bind_rows(
     tibble(value = get_move_value(grid, loc), spiral = spiral_) %&gt;% bind_cols(loc))
 }
