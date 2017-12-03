@@ -127,7 +127,7 @@ $(document).ready(function () {
 
 
 <p><strong>Last updated:</strong> 2017-12-03</p>
-<p><strong>Code version:</strong> f030220</p>
+<p><strong>Code version:</strong> 9686889</p>
 <blockquote>
 <p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
 </blockquote>
@@ -189,7 +189,8 @@ input</code></pre>
 </div>
 <div id="functions" class="section level2">
 <h2>Functions</h2>
-<pre class="r"><code>get_spiral_params &lt;- function(input){
+<pre class="r"><code># gets some parameters associated with the outer spiral in which the input value falls 
+get_spiral_params &lt;- function(input){
     sp_start &lt;- 2
     dist &lt;- 1
     diam &lt;- 2 * dist + 1
@@ -207,6 +208,7 @@ input</code></pre>
     out
 }
 
+# gets any additional distance as a result of the position of the value in the outer spiral
 get_dist &lt;- function(input, sp = sps %&gt;% filter(sp_start &lt;= input) %&gt;% tail(1)){
     abs(1:(sp$diam - 1) - mean(1:sp$diam))[
         (input - sp$sp_start) %% (sp$diam - 1)  + 1] + sp$dist
@@ -230,7 +232,22 @@ expect_equal({
 <div id="deploy" class="section level2">
 <h2>deploy</h2>
 <pre class="r"><code>sps &lt;- get_spiral_params(input)
-get_dist(input)</code></pre>
+sps</code></pre>
+<pre><code># A tibble: 286 x 3
+    dist sp_start  diam
+   &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+ 1     1        2     3
+ 2     2        9     5
+ 3     3       25     7
+ 4     4       49     9
+ 5     5       81    11
+ 6     6      121    13
+ 7     7      169    15
+ 8     8      225    17
+ 9     9      289    19
+10    10      361    21
+# ... with 276 more rows</code></pre>
+<pre class="r"><code>get_dist(input)</code></pre>
 <pre><code>[1] 552</code></pre>
 </div>
 <div id="success" class="section level2">
@@ -254,18 +271,21 @@ get_dist(input)</code></pre>
 <div id="lets-go-1" class="section level1">
 <h1>Let’s go</h1>
 <pre class="r"><code>get_move_value &lt;- function(grid, loc){
+    # filter values which are in the neighbourhood of the location given and sum
     grid %&gt;% filter(x %in% (-1:1 + loc$x) , y %in% (-1:1 + loc$y)) %&gt;% select(value) %&gt;% sum}
 
 get_value_row &lt;- function(grid){
     last_row &lt;- tail(grid, 1)
-    spiral_ &lt;- last_row$spiral
-    spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow 
+    spiral_ &lt;- last_row$spiral # which spiral are we on? Spirals are corner trajectories spaning two axis directions, each of steps equal to spiral
+    spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow # how many steps
+    # have we taken on this spiral. 
     if(spiral_moves &gt;= (spiral_ * 2)){
-        spiral_ &lt;- spiral_ + 1
-        spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow
+        spiral_ &lt;- spiral_ + 1 # shift to next spiral
+        spiral_moves &lt;- grid %&gt;% filter(spiral == spiral_) %&gt;% nrow # reset the number of steps
     }
-    
+    # set the sign of the step in coordinate space
     if(spiral_ %% 2 == 1){sign = +1}else{sign = -1} 
+    # set the axis of travel
     if(spiral_moves &lt; spiral_){move &lt;- c(1,0) * sign}else{move &lt;- c(0,1) * sign}
     
     loc &lt;- last_row %&gt;% select(x,y) + move
@@ -281,6 +301,21 @@ get_first_sum &lt;- function(input){
     }
     tail(grid$value, 1)
 }</code></pre>
+<div id="see-what-the-functions-do" class="section level2">
+<h2>See what the functions do:</h2>
+<pre class="r"><code>grid &lt;- tibble(value = 1, spiral = 0, x = 0, y = 0)
+grid</code></pre>
+<pre><code># A tibble: 1 x 4
+  value spiral     x     y
+  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1     1      0     0     0</code></pre>
+<pre class="r"><code>get_value_row(grid)</code></pre>
+<pre><code># A tibble: 2 x 4
+  value spiral     x     y
+  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1     1      0     0     0
+2     1      1     1     0</code></pre>
+</div>
 <div id="test-1" class="section level2">
 <h2>Test</h2>
 <pre class="r"><code>expect_equal(get_first_sum(2), 2)
