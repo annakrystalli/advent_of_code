@@ -29,6 +29,8 @@ About:
 
 - [--- Day 1: Inverse Captcha ---](http://annakrystalli.me/advent_of_code/puzzles/Day1_17.html)
 - [--- Day 2: Corruption Checksum ---](http://annakrystalli.me/advent_of_code/puzzles/Day2_17.html)
+- [--- Day 3: Spiral Memory ---](http://annakrystalli.me/advent_of_code/puzzles/Day3_17.html)
+
 
 
 <br>
