@@ -127,7 +127,7 @@ $(document).ready(function () {
 
 
 <p><strong>Last updated:</strong> 2017-12-04</p>
-<p><strong>Code version:</strong> 6c2a0f2</p>
+<p><strong>Code version:</strong> 2f54606</p>
 <blockquote>
 <p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
 </blockquote>
@@ -209,6 +209,9 @@ expect_equal(test_passphrase(test_input_pass), TRUE)</code></pre>
 <div id="brief-1" class="section level2">
 <h2>Brief</h2>
 <!-- Insert Part 2 of the puzzle brief here -->
+<p>For added security, yet another system policy has been put in place. Now, a valid passphrase must contain no two words that are anagrams of each other - that is, a passphrase is invalid if any word’s letters can be rearranged to form any other word in the passphrase.</p>
+<p>For example:</p>
+<p>abcde fghij is a valid passphrase. abcde xyz ecdab is not valid - the letters from the third word can be rearranged to form the first word. a ab abc abd abf abj is a valid passphrase, because all letters need to be used when forming another word. iiii oiii ooii oooi oooo is valid. oiii ioii iioi iiio is not valid - any of these words can be rearranged to form any other word. Under this new system policy, how many passphrases are valid?</p>
 </div>
 </div>
 <div id="lets-go-1" class="section level1">
