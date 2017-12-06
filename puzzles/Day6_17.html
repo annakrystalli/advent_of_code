@@ -127,7 +127,7 @@ $(document).ready(function () {
 
 
 <p><strong>Last updated:</strong> 2017-12-06</p>
-<p><strong>Code version:</strong> 90574b1</p>
+<p><strong>Code version:</strong> 9a2e62a</p>
 <blockquote>
 <p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
 </blockquote>
@@ -188,7 +188,7 @@ library(aocodeR)</code></pre>
 
     no_banks &lt;- length(input)
     banks &lt;- input %&gt;% setNames(1:no_banks) 
-    conf &lt;- banks %&gt;% as.list() %&gt;% as_tibble()
+    conf &lt;- paste(banks, collapse = &quot;&quot;)
     empty_banks &lt;- rep(0, no_banks) %&gt;% setNames(1:no_banks) 
     
     while(!(conf %&gt;% duplicated() %&gt;% any)){
@@ -201,9 +201,9 @@ library(aocodeR)</code></pre>
         red &lt;- empty_banks
         red[names(red_blocks)] &lt;- red_blocks
         banks &lt;- banks + (red %&gt;% as.vector())
-        conf &lt;- bind_rows(conf, banks)
+        conf &lt;- c(conf, paste(banks, collapse = &quot;&quot;))
     }
-    list(cycle = (nrow(conf) - 1), conf = conf)
+    list(cycle = (length(conf) - 1), conf = conf)
 }</code></pre>
 </div>
 <div id="test" class="section level2">
@@ -240,11 +240,11 @@ library(aocodeR)</code></pre>
 <div id="test-1" class="section level2">
 <h2>Test</h2>
 <pre class="r"><code>out_test &lt;- get_dup_conf( c(0,2,7,0))
-expect_equal(out_test$conf[nrow(out_test$conf):1,] %&gt;% duplicated() %&gt;% which(. == T) -1, 4)</code></pre>
+expect_equal(out_test$conf[length(out_test$conf):1] %&gt;% duplicated() %&gt;% which(. == T) -1, 4)</code></pre>
 </div>
 <div id="deploy-1" class="section level2">
 <h2>deploy</h2>
-<pre class="r"><code>out$conf[nrow(out$conf):1,] %&gt;% duplicated() %&gt;% which(. == T) -1</code></pre>
+<pre class="r"><code>out$conf[length(out$conf):1] %&gt;% duplicated() %&gt;% which(. == T) -1</code></pre>
 <pre><code>[1] 2765</code></pre>
 </div>
 <div id="success-1" class="section level2">
