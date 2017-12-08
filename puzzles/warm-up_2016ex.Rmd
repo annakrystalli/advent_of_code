@@ -58,13 +58,23 @@ library(tidyverse)
 Load string of step instructions and split into directions (`step_dirs`) and number of steps (`step_dists`)
 
 ```{r}
-steps <- readLines("../inputs/dir_input.txt") %>% strsplit(", ") %>% unlist() 
+steps <- readLines("../inputs/dir_input.txt") %>% strsplit(", ") %>% unlist()
+# Test
+#steps <- c("R8", "R4", "R4", "R8")
 
+steps
+```
+
+```{r}
 steps_dirs <- gsub("[0-9]", "", steps)
 steps_dists <- gsub("[A-Z]", "", steps) %>% as.numeric()
 ```
 
+
 ### Set up table to recode `L` & `R` to compass directions (`N`, `S`, `E`, `W`)
+
+
+
 
 ```{r}
 dirs_lat <- c("N", "S")
@@ -92,6 +102,60 @@ tibble(compass_dirs, steps_dists) %>% group_by(compass_dirs) %>% summarise(sum =
 ```
 
 
-#Success!
+## Success!
 
 ![](../screenshots/test-Day1_1.png)
+
+# --- Part Two ---
+
+```{r}
+steps.tbl <- tibble(compass_dirs, steps_dists, steps_dirs) %>% mutate(
+    steps_dists_sign = case_when(
+        compass_dirs %in% c(dirs_lat[1], dirs_lon[1]) ~ steps_dists,
+        TRUE ~ -steps_dists),
+    orient = case_when(
+        compass_dirs %in% dirs_lat ~ "lat",
+        TRUE ~ "lon"))
+
+steps.tbl
+```
+
+## Retrace individual steps through coordinate space
+
+```{r}
+trace_steps <- function(last_step, steps = steps.tbl$steps_dists_sign[i], on.axis = TRUE) {
+    switch(as.character(on.axis),
+           "TRUE" = last_step + sign(steps):steps,
+           "FALSE" = rep(last_step, abs(steps)))
+}
+
+
+loc <- list(lon = 0, lat = 0)
+for(i in 1:nrow(steps.tbl)){
+    axis <- steps.tbl$orient[i] 
+    switch(axis,
+           "lat" = {
+               loc$lat <- c(loc$lat, trace_steps(last_step = tail(loc$lat,1), on.axis = TRUE))
+               loc$lon <- c(loc$lon, trace_steps(last_step = tail(loc$lon,1), on.axis = FALSE))},
+           "lon" = {
+               loc$lon <- c(loc$lon, trace_steps(last_step = tail(loc$lon,1), on.axis = TRUE))
+               loc$lat <- c(loc$lat, trace_steps(last_step = tail(loc$lat,1), on.axis = FALSE))}
+    )
+}
+loc <- loc %>% as.tibble()
+loc
+```
+
+## Find first duplicate location and calculate distance
+```{r}
+first_dup <- loc %>% duplicated() %>% which() %>% min
+loc %>% slice(first_dup) %>% map_df(abs) %>% rowSums()
+```
+
+
+## Success!
+
+Phew...that took ages... 20.06 and I'm still at work. Time to go home!
+
+![](../screenshots/test-Day1_2.png)
+
