@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+puzzles/*.Rmd
+inst/session_cookie.txt
+screenshots/
+*.Rproj
+secrets/
+puzzles/Day8_17.html
+R/functions.R
