@@ -126,8 +126,8 @@ $(document).ready(function () {
 </div>
 
 
-<p><strong>Last updated:</strong> 2017-12-07</p>
-<p><strong>Code version:</strong> 6ba09cc</p>
+<p><strong>Last updated:</strong> 2017-12-08</p>
+<p><strong>Code version:</strong> 657bc69</p>
 <blockquote>
 <p><a href="http://annakrystalli.me/advent_of_code/"><strong><em>See more puzzles</em></strong></a></p>
 </blockquote>
@@ -177,15 +177,24 @@ ugml (68) -&gt; gyxo, ebii, jptl
 gyxo (61)
 cntj (57)</code></pre>
 <p>…then you would be able to recreate the structure of the towers that looks like this:</p>
-<p>```` gyxo /<br />
-ugml - ebii /  <br />
-| jptl |<br />
-| pbga / / tknk — padx - havc  <br />
-| qoyq |<br />
-| ktlj   /<br />
-fwft - cntj  <br />
-xhth</p>
-<p>```</p>
+<pre><code>                gyxo
+              /     
+         ugml - ebii
+       /      \     
+      |         jptl
+      |        
+      |         pbga
+     /        /
+tknk --- padx - havc
+     \        \
+      |         qoyq
+      |             
+      |         ktlj
+       \      /     
+         fwft - cntj
+              \     
+                xhth
+</code></pre>
 <p>In this example, tknk is at the bottom of the tower (the bottom program), and is holding up ugml, padx, and fwft. Those programs are, in turn, holding up other programs; in this example, none of those programs are holding up any other programs, and are all the tops of their own towers. (The actual tower balancing in front of you is much larger.)</p>
 <p>Before you’re ready to help them, you need to make sure your information is correct. What is the name of the bottom program?</p>
 </div>
