@@ -1,0 +1,185 @@
+---
+title: "--- Day 4: High-Entropy Passphrases ---"
+author: "annakrystalli"
+date: 2017-12-04
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+A new system policy has been put in place that requires all accounts to use a passphrase instead of simply a password. A passphrase consists of a series of words (lowercase letters) separated by spaces.
+
+To ensure security, a valid passphrase must contain no duplicate words.
+
+For example:
+
+aa bb cc dd ee is valid.
+aa bb cc dd aa is not valid - the word aa appears more than once.
+aa bb cc dd aaa is valid - aa and aaa count as different words.
+The system's full passphrase list is available as your puzzle input. How many passphrases are valid?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 4, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>%
+    strsplit("\n") %>% unlist
+```
+
+## Functions
+```{r}
+ 
+test_passphrase <- function(passphrase){
+    !(passphrase %>% strsplit(split = " ") %>% unlist %>% duplicated %>% any)
+}
+```
+
+## Test
+```{r}
+test_input_fail <- "aa bb cc dd aa"
+test_input_pass <- "aa bb cc dd ee"
+
+expect_equal(test_passphrase(test_input_fail), FALSE)
+expect_equal(test_passphrase(test_input_pass), TRUE)
+```
+
+## deploy
+
+```{r}
+input %>% map_lgl(test_passphrase) %>% sum
+```
+
+
+## Success!
+
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+For added security, yet another system policy has been put in place. Now, a valid passphrase must contain no two words that are anagrams of each other - that is, a passphrase is invalid if any word's letters can be rearranged to form any other word in the passphrase.
+
+For example:
+
+abcde fghij is a valid passphrase.
+abcde xyz ecdab is not valid - the letters from the third word can be rearranged to form the first word.
+a ab abc abd abf abj is a valid passphrase, because all letters need to be used when forming another word.
+iiii oiii ooii oooi oooo is valid.
+oiii ioii iioi iiio is not valid - any of these words can be rearranged to form any other word.
+Under this new system policy, how many passphrases are valid?
+
+
+
+# Let's go
+
+```{r}
+  
+test_anagram <- function(passphrase){
+    
+    chunks <- passphrase %>% strsplit(split = " ") %>% 
+        unlist %>% map(function(.) {strsplit(., split = numeric()) %>% unlist})
+    
+    comps <- expand.grid(1:length(chunks), 1:length(chunks)) %>% 
+        filter(Var1 != Var2)
+    
+    !(comps %>%
+        apply(1, FUN = function(x, chunks){
+            setequal(chunks[[x[1]]], chunks[[x[2]]])}, 
+            chunks = chunks) %>% any)
+}      
+```
+
+
+## Test
+```{r}
+input_test <- list(c("abcd", "dcba"), c("abce", "dcba"), c("abce", "dcba"))
+expect_equal(input_test %>% map_lgl(test_anagram) %>% sum
+,2)
+
+input_test <- list(c("abcd", "dcba"), c("abce", "dcba"))
+expect_equal(input_test %>% map_lgl(test_anagram) %>% sum
+,1)
+```
+
+## deploy
+
+```{r}
+input %>% map_lgl(test_anagram) %>% sum
+```
+
+## Success!
+
+![](../screenshots/Day1_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

@@ -1,0 +1,183 @@
+---
+title: "--- Day 6: Memory Reallocation ---"
+author: "annakrystalli"
+date: 2017-12-06
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+A debugger program here is having an issue: it is trying to repair a memory reallocation routine, but it keeps getting stuck in an infinite loop.
+
+In this area, there are **sixteen memory banks;** each memory bank can hold any number of blocks. The goal of the reallocation routine is to balance the blocks between the memory banks.
+
+The reallocation routine operates in cycles. In each cycle, it **finds the memory bank with the most blocks (ties won by the lowest-numbered memory bank)** and redistributes those blocks among the banks. To do this, it removes all of the blocks from the selected bank, then moves to the next (by index) memory bank and inserts one of the blocks. It continues doing this until it runs out of blocks; if it reaches the last memory bank, it wraps around to the first one.
+
+The debugger would like to know how many redistributions can be done before a blocks-in-banks configuration is produced that has been seen before.
+
+For example, imagine a scenario with only four memory banks:
+
+The banks start with 0, 2, 7, and 0 blocks. The third bank has the most blocks, so it is chosen for redistribution.
+Starting with the next bank (the fourth bank) and then continuing to the first bank, the second bank, and so on, the 7 blocks are spread out over the memory banks. The fourth, first, and second banks get two blocks each, and the third bank gets one back. The final result looks like this: 2 4 1 2.
+
+Next, the second bank is chosen because it contains the most blocks (four). Because there are four memory banks, each gets one block. The result is: 3 1 2 3.
+Now, there is a tie between the first and fourth memory banks, both of which have three blocks. The first bank wins the tie, and its three blocks are distributed evenly over the other three banks, leaving it with none: 0 2 3 4.
+The fourth bank is chosen, and its four blocks are distributed such that each of the four banks receives one: 1 3 4 1.
+The third bank is chosen, and the same thing happens: 2 4 1 2.
+At this point, we've reached a state we've seen before: 2 4 1 2 was already seen. The infinite loop is detected after the fifth block redistribution cycle, and so the answer in this example is 5.
+
+Given the initial block counts in your puzzle input, how many redistribution cycles must be completed before a configuration is produced that has been seen before?
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 6, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>% strsplit("\t") %>% unlist %>% as.numeric
+
+```
+
+## Functions
+```{r}
+get_dup_conf <- function(input){
+
+    no_banks <- length(input)
+    banks <- input %>% setNames(1:no_banks) 
+    conf <- paste(banks, collapse = "")
+    empty_banks <- rep(0, no_banks) %>% setNames(1:no_banks) 
+    
+    while(!(conf %>% duplicated() %>% any)){
+        highest <- which(banks == max(banks))[1]
+        blocks <- banks[highest]
+        banks[highest] <- 0
+        red_blocks <- (highest + 1):(highest + 1 + blocks - 1) %% length(banks)
+        red_blocks[red_blocks == 0] <- length(banks)
+        red_blocks <- red_blocks %>% table 
+        red <- empty_banks
+        red[names(red_blocks)] <- red_blocks
+        banks <- banks + (red %>% as.vector())
+        conf <- c(conf, paste(banks, collapse = ""))
+    }
+    list(cycle = (length(conf) - 1), conf = conf)
+}
+
+```
+
+## Test
+```{r}
+expect_equal(get_dup_conf( c(0,2,7,0))$cycle, 5)
+```
+
+## deploy
+
+
+```{r}
+out <- get_dup_conf(input)
+```
+
+```{r}
+out$cycle
+```
+
+
+## Success!
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+Out of curiosity, the debugger would also like to know the size of the loop: starting from a state that has already been seen, how many block redistribution cycles must be performed before that same state is seen again?
+
+In the example above, 2 4 1 2 is seen again after four cycles, and so the answer in that example would be 4.
+
+How many cycles are in the infinite loop that arises from the configuration in your puzzle input?
+
+
+
+# Let's go
+
+## Test
+```{r}
+out_test <- get_dup_conf( c(0,2,7,0))
+expect_equal(out_test$conf[length(out_test$conf):1] %>% duplicated() %>% which(. == T) -1, 4)
+```
+
+## deploy
+
+```{r}
+out$conf[length(out$conf):1] %>% duplicated() %>% which(. == T) -1
+```
+
+## Success!
+
+
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

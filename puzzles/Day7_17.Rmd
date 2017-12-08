@@ -1,0 +1,300 @@
+---
+title: "--- Day 7: Recursive Circus ---"
+author: "annakrystalli"
+date: 2017-12-07
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+Wandering further through the circuits of the computer, you come upon a tower of programs that have gotten themselves into a bit of trouble. A recursive algorithm has gotten out of hand, and now they're balanced precariously in a large tower.
+
+One program at the bottom supports the entire tower. It's holding a large disc, and on the disc are balanced several more sub-towers. At the bottom of these sub-towers, standing on the bottom disc, are other programs, each holding their own disc, and so on. At the very tops of these sub-sub-sub-...-towers, many programs stand simply keeping the disc below them balanced but with no disc of their own.
+
+You offer to help, but first you need to understand the structure of these towers. You ask each program to yell out their name, their weight, and (if they're holding a disc) the names of the programs immediately above them balancing on that disc. You write this information down (your puzzle input). Unfortunately, in their panic, they don't do this in an orderly fashion; by the time you're done, you're not sure which program gave which information.
+
+For example, if your list is the following:
+```
+pbga (66)
+xhth (57)
+ebii (61)
+havc (66)
+ktlj (57)
+fwft (72) -> ktlj, cntj, xhth
+qoyq (66)
+padx (45) -> pbga, havc, qoyq
+tknk (41) -> ugml, padx, fwft
+jptl (61)
+ugml (68) -> gyxo, ebii, jptl
+gyxo (61)
+cntj (57)
+```
+
+...then you would be able to recreate the structure of the towers that looks like this:
+
+```
+                gyxo
+              /     
+         ugml - ebii
+       /      \     
+      |         jptl
+      |        
+      |         pbga
+     /        /
+tknk --- padx - havc
+     \        \
+      |         qoyq
+      |             
+      |         ktlj
+       \      /     
+         fwft - cntj
+              \     
+                xhth
+
+```
+
+In this example, tknk is at the bottom of the tower (the bottom program), and is holding up ugml, padx, and fwft. Those programs are, in turn, holding up other programs; in this example, none of those programs are holding up any other programs, and are all the tops of their own towers. (The actual tower balancing in front of you is much larger.)
+
+Before you're ready to help them, you need to make sure your information is correct. What is the name of the bottom program?
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 7, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>% strsplit("[[\\]]|[^[:print:]]") %>% unlist 
+input %>% head()
+```
+
+## Functions
+```{r}
+find_base <- function(input){
+  edges <- input %>% grep("->", ., value = T) 
+  base_node <- gsub(" \\(.*$", "", edges)
+  first_node <- gsub("^.*-> ", "", edges) %>% strsplit(", ") %>% unlist
+  base_node[which(!(base_node %in% first_node))]
+}
+```
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+find_base(input)
+```
+
+
+## Success!
+
+
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+The programs explain the situation: they can't get down. Rather, they could get down, if they weren't expending all of their energy trying to keep the tower balanced. Apparently, one program has the wrong weight, and until it's fixed, they're stuck here.
+
+For any program holding a disc, each program standing on that disc forms a sub-tower. Each of those sub-towers are supposed to be the same weight, or the disc itself isn't balanced. The weight of a tower is the sum of the weights of the programs in that tower.
+
+In the example above, this means that for ugml's disc to be balanced, gyxo, ebii, and jptl must all have the same weight, and they do: 61.
+
+However, for tknk to be balanced, each of the programs standing on its disc and all programs above it must each match. This means that the following sums must all be the same:
+
+```
+ugml + (gyxo + ebii + jptl) = 68 + (61 + 61 + 61) = 251
+padx + (pbga + havc + qoyq) = 45 + (66 + 66 + 66) = 243
+fwft + (ktlj + cntj + xhth) = 72 + (57 + 57 + 57) = 243
+```
+
+As you can see, tknk's disc is unbalanced: ugml's stack is heavier than the other two. Even though the nodes above ugml are balanced, ugml itself is too heavy: it needs to be 8 units lighter for its stack to weigh 243 and keep the towers balanced. If this change were made, its weight would be 60.
+
+Given that exactly one program is the wrong weight, what would its weight need to be to balance the entire tower?
+
+# Functions
+
+So much code :(
+
+```{r}
+# compile node relationships
+attach_to_base <- function(input, base_node = find_base(input)){
+  edges <- input %>% grep("->", ., value = T) 
+  base_nodes <- gsub(" \\(.*$", "", edges)
+  gsub("^.*-> ", "", edges) %>% strsplit(", ") %>% setNames(base_nodes)
+  }
+
+# get weights for each node
+get_weights <- function(input){
+    base_names <- input %>% gsub(" \\(.*$", "", .)
+ input %>% gsub("[^0-9]", "", .) %>% as.numeric %>% setNames(base_names)
+       }
+
+# get node info for a given depth
+get_nodes_depth <- function(base, depth, 
+                            nodes = nodes, wts = wts){
+    nds <- nodes[[base]]
+    if(!is.null(nds)){ 
+        tibble(base = base, nodes = nds, wts = wts[nds], depth = depth)
+    }
+}
+
+# iterate across all depths    
+get_nodes_tbl <- function(start_node = "veboyvy", wts = wts){
+    i = 0
+    df <- tibble(base = NA, nodes = start_node,  wts = wts["veboyvy"], depth = i)
+    base <- df %>% filter(depth == i) %>% pull(nodes)
+    while(length(base) > 0){
+        i <- i + 1
+        df <- bind_rows(df, base %>% map_dfr(get_nodes_depth, i, nodes, wts))
+        base <- df %>% filter(depth == i) %>% pull(nodes)
+    }
+    df
+}
+
+# find unbalanced tower
+check_tower_balance <- function(df){
+    for(depth.i in max(df$depth):min(df$depth)){    
+        sum_df <- df %>% filter(depth == depth.i) %>% group_by(base) %>% 
+            summarise(sum_below = sum(wts),
+                      depth = depth.i - 1, 
+                      unbalanced = length(unique(wts)) != 1) 
+        
+        if(any(sum_df$unbalanced)){
+            return(df %>% filter(depth == depth.i, 
+                                 base %in% sum_df$base[sum_df$unbalanced]))
+        }else{
+            sum_df <- sum_df %>% mutate(nodes = base) %>% select(-unbalanced, -base)
+        }
+        
+        df <- df %>% left_join(sum_df, by = c("nodes", "depth")) %>% 
+            mutate(wts = case_when(
+                is.na(sum_below) ~ wts,
+                TRUE ~ wts + sum_below)) %>% 
+            select(base:depth)
+    }
+}
+
+# get the value neede to balance the tower
+get_unbalance <- function(check_out){
+    comp <- check_out %>% count(wts) %>% arrange(n) 
+    wts[check_out$nodes[check_out$wts == pull(comp, "wts")[1]]] + 
+        (comp  %>% pull(wts) %>% diff)
+}
+```
+
+
+# Let's go
+
+## Test - abort - going in without testing
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+wts <- get_weights(input)
+nodes <- attach_to_base(input)
+
+get_nodes_tbl(start_node = find_base(input), wts = wts) %>% 
+    check_tower_balance %>%
+    get_unbalance
+```
+
+#### Here's what the functions do
+
+
+```{r}
+get_weights(input) %>% head
+attach_to_base(input) %>% head
+```
+
+```{r}
+df <- get_nodes_tbl(start_node = find_base(input), wts = wts)
+df
+
+df %>% check_tower_balance
+```
+
+
+
+## FinallY...Success!
+
+
+What a palava though. This puzzle really did my head in as I kept hitting dead ends trying to work recursively with lists. Had to completely change course after quite some effort and am sure my solution is convoluted and cumbersome but I'm sure glad it's done. So glad in fact, I'm gonna flash what the calendar is looking like to make myself feel better!
+
+
+![](../screenshots/Cal_7.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

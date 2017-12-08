@@ -1,0 +1,263 @@
+---
+title: "--- Day 3: Spiral Memory ---"
+author: "annakrystalli"
+date: 2017-12-03
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+You come across an experimental new kind of memory stored on an infinite two-dimensional grid.
+
+Each square on the grid is allocated in a spiral pattern starting at a location marked 1 and then counting up while spiraling outward. For example, the first few squares are allocated like this:
+
+```
+17  16  15  14  13
+18   5   4   3  12
+19   6   1   2  11
+20   7   8   9  10
+21  22  23---> ...
+```
+
+While this is very space-efficient (no squares are skipped), requested data must be carried back to square 1 (the location of the only access port for this memory system) by programs that can only move up, down, left, or right. They always take the shortest path: the Manhattan Distance between the location of the data and square 1.
+
+For example:
+
+Data from square 1 is carried 0 steps, since it's at the access port.
+Data from square 12 is carried 3 steps, such as: down, left, left.
+Data from square 23 is carried only 2 steps: up twice.
+Data from square 1024 must be carried 31 steps.
+How many steps are required to carry the data from the square identified in your puzzle input all the way to the access port?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 3, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>%
+    as.numeric()
+input
+```
+
+
+## Functions
+```{r}
+# gets some parameters associated with the outer spiral in which the input value falls 
+get_spiral_params <- function(input){
+    sp_start <- 2
+    dist <- 1
+    diam <- 2 * dist + 1
+    
+    out <- tibble(dist = dist, sp_start = sp_start, diam = diam)
+    
+    while(sp_start < input){
+        dist <- dist + 1
+        sp_start <- (dist + (dist - 1))^2
+        diam <- 2 * dist + 1
+        
+        out <- out %>% bind_rows(
+            tibble(dist = dist, sp_start = sp_start, diam = diam))
+    }
+    out
+}
+
+# gets any additional distance as a result of the position of the value in the outer spiral
+get_dist <- function(input, sp = sps %>% filter(sp_start <= input) %>% tail(1)){
+    abs(1:(sp$diam - 1) - mean(1:sp$diam))[
+        (input - sp$sp_start) %% (sp$diam - 1)  + 1] + sp$dist
+    
+}
+
+```
+
+
+## Test
+```{r}
+expect_equal({
+    sps <- get_spiral_params(12)
+    get_dist(12)},3)
+
+expect_equal({
+    sps <- get_spiral_params(23)
+    get_dist(23)},2)
+
+expect_equal({
+    sps <- get_spiral_params(1024)
+    get_dist(1024)},31)
+```
+
+## deploy
+
+```{r}
+sps <- get_spiral_params(input)
+sps
+
+get_dist(input)
+```
+
+
+
+## Success!
+
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+As a stress test on the system, the programs here clear the grid and then store the value 1 in square 1. Then, in the same allocation order as shown above, they store the sum of the values in all adjacent squares, including diagonals.
+
+So, the first few squares' values are chosen as follows:
+
+Square 1 starts with the value 1.
+Square 2 has only one adjacent filled square (with value 1), so it also stores 1.
+Square 3 has both of the above squares as neighbors and stores the sum of their values, 2.
+Square 4 has all three of the aforementioned squares as neighbors and stores the sum of their values, 4.
+Square 5 only has the first and fourth squares as neighbors, so it gets the value 5.
+Once a square is written, its value does not change. Therefore, the first few squares would receive the following values:
+
+147  142  133  122   59
+304    5    4    2   57
+330   10    1    1   54
+351   11   23   25   26
+362  747  806--->   ...
+
+What is the first value written that is larger than your puzzle input?
+
+
+
+# Let's go
+
+```{r}
+# filter values which are in the neighbourhood of the location given and sum
+get_move_value <- function(grid, loc){
+    grid %>% filter(x %in% (-1:1 + loc$x) , y %in% (-1:1 + loc$y)) %>% select(value) %>% sum}
+
+get_value_row <- function(grid){
+    last_row <- tail(grid, 1)
+    spiral_ <- last_row$spiral # which spiral are we on? Spirals are corner trajectories spaning two axis directions, each of steps equal to spiral
+    spiral_moves <- grid %>% filter(spiral == spiral_) %>% nrow # how many steps have we taken on this spiral. 
+    
+    if(spiral_moves >= (spiral_ * 2)){
+        spiral_ <- spiral_ + 1 # shift to next spiral
+        spiral_moves <- grid %>% filter(spiral == spiral_) %>% nrow # reset the number of steps
+    }
+    
+    # set the sign of the step in coordinate space
+    if(spiral_ %% 2 == 1){sign = +1}else{sign = -1} 
+    # set the axis of travel
+    if(spiral_moves < spiral_){move <- c(1,0) * sign}else{move <- c(0,1) * sign}
+    
+    loc <- last_row %>% select(x,y) + move
+    grid %>% bind_rows(
+    tibble(value = get_move_value(grid, loc), spiral = spiral_) %>% bind_cols(loc))
+}
+
+get_first_sum <- function(input){
+    grid <- tibble(value = 1, spiral = 0, x = 0, y = 0)
+    while(tail(grid$value, 1) < input){
+        grid <- get_value_row(grid)
+    }
+    tail(grid$value, 1)
+}
+```
+
+## See what the functions do:
+```{r}
+grid <- tibble(value = 1, spiral = 0, x = 0, y = 0)
+grid
+```
+
+
+```{r}
+get_value_row(grid)
+```
+
+
+## Test
+```{r}
+expect_equal(get_first_sum(2), 2)
+expect_equal(get_first_sum(4), 4)
+expect_equal(get_first_sum(5), 5)
+```
+
+## deploy
+
+```{r}
+get_first_sum(input)
+
+```
+
+## Success!
+
+![](../screenshots/Day3_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

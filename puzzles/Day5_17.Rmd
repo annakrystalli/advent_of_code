@@ -1,0 +1,193 @@
+---
+title: "--- Day 5: A Maze of Twisty Trampolines, All Alike ---"
+author: "annakrystalli"
+date: 2017-12-05
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+An urgent interrupt arrives from the CPU: it's trapped in a maze of jump instructions, and it would like assistance from any programs with spare cycles to help find the exit.
+
+The message includes a list of the offsets for each jump. Jumps are relative: -1 moves to the previous instruction, and 2 skips the next one. Start at the first instruction in the list. The goal is to follow the jumps until one leads outside the list.
+
+In addition, these instructions are a little strange; after each jump, the offset of that instruction increases by 1. So, if you come across an offset of 3, you would move three instructions forward, but change it to a 4 for the next time it is encountered.
+
+For example, consider the following list of jump offsets:
+
+0
+3
+0
+1
+-3
+Positive jumps ("forward") move downward; negative jumps move upward. For legibility in this example, these offset values will be written all on one line, with the current instruction marked in parentheses. The following steps would be taken before an exit is found:
+
+- `(0) 3  0  1  -3`  - before we have taken any steps.
+
+- `(1) 3  0  1  -3`  - jump with offset 0 (that is, don't jump at all). Fortunately, the instruction is then incremented to 1.
+
+- `2 (3) 0  1  -3`  - step forward because of the instruction we just modified. The first instruction is incremented again, now to 2.
+ 
+- `2  4  0  1 (-3)` - jump all the way to the end; leave a 4 behind.
+
+- `2 (4) 0  1  -2`  - go back to where we just were; increment -3 to -2.
+
+- `2  5  0  1  -2`  - jump 4 steps forward, escaping the maze.
+
+In this example, the exit is reached in 5 steps.
+
+How many steps does it take to reach the exit?
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 5, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+input <- input %>% strsplit("\n") %>% unlist %>% as.numeric
+```
+
+## Functions
+```{r}
+steps_to_exit <- function(offsets){
+    i <- 1
+    steps <- 0
+    while(i <= length(offsets) & i > 0){
+        j <- i
+        i <- i + offsets[i]
+        offsets[j] <- offsets[j] + 1
+        steps <- steps + 1
+    }
+    steps
+}
+```
+
+## Test
+```{r}
+expect_equal(steps_to_exit(c(0, 3, 0, 1, -3)), 5)
+```
+
+## deploy
+
+```{r}
+steps_to_exit(input)
+```
+
+
+## Success!
+
+![](../screenshots/Day5_1.png)
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+Now, the jumps are even stranger: after each jump, if the offset was three or more, instead decrease it by 1. Otherwise, increase it by 1 as before.
+
+Using this rule with the above example, the process now takes 10 steps, and the offset values after finding the exit are left as 2 3 2 3 -1.
+
+How many steps does it now take to reach the exit?
+
+
+
+# Let's go
+
+```{r}
+steps_to_exit2 <- function(offsets){
+    i <- 1
+    steps <- 0
+    while(i <= length(offsets) & i > 0){
+        j <- i
+        i <- i + offsets[i]
+        offsets[j] <- offsets[j] + if(offsets[j] >= 3){-1}else{1}
+        steps <- steps + 1
+    }
+    steps
+}
+```
+
+
+## Test
+```{r}
+expect_equal(steps_to_exit2(c(0, 3, 0, 1, -3)), 10)
+```
+
+## deploy
+
+```{r}
+steps_to_exit2(input)
+```
+
+## Success!
+
+![](../screenshots/Day5_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

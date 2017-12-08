@@ -1,0 +1,200 @@
+---
+title: "--- Day 2: Bathroom Security ---"
+author: "annakrystalli"
+date: 2017-11-29
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+<!-- Add your analysis here -->
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+# Brief http://adventofcode.com/2016/day/2
+
+You arrive at Easter Bunny Headquarters under cover of darkness. However, you left in such a rush that you forgot to use the bathroom! Fancy office buildings like this one usually have keypad locks on their bathrooms, so you search the front desk for the code.
+
+"In order to improve security," the document you find says, "bathroom codes will no longer be written down. Instead, please memorize and follow the procedure below to access the bathrooms."
+
+The document goes on to explain that each button to be pressed can be found by starting on the previous button and moving to adjacent buttons on the keypad: U moves up, D moves down, L moves left, and R moves right. Each line of instructions corresponds to one button, starting at the previous button (or, for the first line, the "5" button); press whatever button you're on at the end of each line. If a move doesn't lead to a button, ignore it.
+
+You can't hold it much longer, so you decide to figure out the code as you walk to the bathroom. You picture a keypad like this:
+
+```
+1 2 3
+4 5 6
+7 8 9
+```
+Suppose your instructions are:
+
+```
+ULL
+RRDDD
+LURDL
+UUUUD
+```
+
+You start at "5" and move up (to "2"), left (to "1"), and left (you can't, and stay on "1"), so the first button is 1.
+Starting from the previous button ("1"), you move right twice (to "3") and then down three times (stopping at "9" after two moves and ignoring the third), ending up with 9.
+Continuing from "9", you move left, up, right, down, and left, ending with 8.
+Finally, you move up four times (stopping at "2"), then down once, ending with 5.
+So, in this example, the bathroom code is 1985.
+
+Your puzzle input is the instructions from the document you found at the front desk. What is the bathroom code?
+
+# Let's go
+
+## Packages
+```{r}
+library(tidyverse)
+library(testthat)
+```
+
+## functions
+
+### find individual keys
+```{r}
+find_key <- function(key_steps, start = 5, keypad_keys = 1:9, nrow = 3) {
+    keypad <- matrix(keypad_keys, nrow = nrow, byrow = T)
+    loc <- which(keypad == start, arr.ind = T) %>% as.vector()
+    for(move in key_steps){
+        switch(move,
+               "L" = loc.try <- loc + c(0,-1),
+               "R" = loc.try <- loc + c(0, 1),
+               "U" = loc.try <- loc + c(-1, 0),
+               "D" = loc.try <- loc + c(1, 0))
+        
+        if(any(loc.try > nrow | loc.try < 1)){next}else{
+            if(is.na(keypad[loc.try[1], loc.try[2]])){next}else{
+            loc <- loc.try}
+            }
+    }
+    keypad[loc[1], loc[2]]    
+}    
+```
+
+### find code
+```{r}
+find_code <- function(code_steps, start = 5, ...){
+    code <- NULL
+    for(i in 1:length(code_steps)){
+        code <- c(code, find_key(code_steps[[i]], start, ...))
+        start <- tail(code, 1)
+    }
+    code
+}
+
+```
+
+## Test
+```{r}
+code_steps_test <- c("ULL", "RRDDD", "LURDL", "UUUUD") %>% 
+    strsplit(split = numeric(), fixed = T)
+
+expect_equal(find_code(code_steps_test, 5), c(1,9,8,5))
+```
+
+# Deploy!
+
+```{r}
+code_steps <- readLines("../inputs/day2_1_16.txt") %>% 
+    strsplit(split = numeric(), fixed = T)
+
+```
+
+```{r}
+find_code(code_steps)
+```
+
+## Success!
+
+![](../screenshots/test-Day2_1.png)
+
+
+## --- Part Two ---
+
+You finally arrive at the bathroom (it's a several minute walk from the lobby so visitors can behold the many fancy conference rooms and water coolers on this floor) and go to punch in the code. Much to your bladder's dismay, the keypad is not at all like you imagined it. Instead, you are confronted with the result of hundreds of man-hours of bathroom-keypad-design meetings:
+```
+    1
+  2 3 4
+5 6 7 8 9
+  A B C
+    D   
+```
+You still start at "5" and stop when you're at an edge, but given the same instructions as above, the outcome is very different:
+
+You start at "5" and don't move at all (up and left are both edges), ending at 5.
+Continuing from "5", you move right twice and down three times (through "6", "7", "B", "D", "D"), ending at D.
+Then, from "D", you move five more times (through "D", "B", "C", "C", "B"), ending at B.
+Finally, after five more moves, you end at 3.
+So, given the actual keypad layout, the code would be 5DB3.
+
+Using the same instructions in your puzzle input, what is the correct bathroom code?
+
+## Encode psycho keypad
+
+```{r}
+psycho_keypad_keys <- c(NA, NA, 1, NA, NA,
+                         NA, 2:4, NA,
+                         5:9,
+                         NA, "A", "B","C", NA,
+                         NA, NA,"D", NA, NA)
+```
+
+
+## Test
+```{r}
+expect_equal(find_code(code_steps_test, 5, keypad_keys = psycho_keypad_keys, 
+         nrow = 5), c("5", "D", "B", "3"))
+```
+
+# Deploy!
+
+```{r}
+find_code(code_steps, 5, keypad_keys = psycho_keypad_keys, 
+         nrow = 5)
+```
+
+## Success!
+
+![](../screenshots/test-Day2_2.png)

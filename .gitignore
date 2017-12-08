@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-puzzles/*.Rmd
+!puzzles/*.Rmd
 inst/session_cookie.txt
 screenshots/
 *.Rproj

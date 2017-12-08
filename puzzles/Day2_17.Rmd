@@ -1,0 +1,218 @@
+---
+title: "--- Day 2: Corruption Checksum ---"
+author: "annakrystalli"
+date: 2017-12-02
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+As you walk through the door, a glowing humanoid shape yells in your direction. "You there! Your state appears to be idle. Come help us repair the corruption in this spreadsheet - if we take another millisecond, we'll have to display an hourglass cursor!"
+
+The spreadsheet consists of rows of apparently-random numbers. To make sure the recovery process is on the right track, they need you to calculate the spreadsheet's checksum. For each row, determine the **difference between the largest value and the smallest value**; the checksum is the **sum of all of these differences**.
+
+For example, given the following spreadsheet:
+
+```
+5 1 9 5
+7 5 3
+2 4 6 8
+```
+
+The first row's largest and smallest values are 9 and 1, and their difference is 8.
+The second row's largest and smallest values are 7 and 3, and their difference is 4.
+The third row's difference is 6.
+In this example, the spreadsheet's checksum would be 8 + 4 + 6 = 18.
+
+What is the checksum for the spreadsheet in your puzzle input?
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+library(httr)
+```
+
+
+## Input
+
+I get my input directly from the AoC server using [`aocodeR`](https://github.com/annakrystalli/aocodeR) function `aoc_get_input`.
+```{r}
+input <- aoc_get_input(day = 2, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt"))
+input
+```
+
+## Functions
+
+The input from the server is a string encoding a table through delimiters `\n` for **newline** and **`\t`** for **tab** (or newcell). So I'll write a function to convert it to a matrix. Might be useful for future puzzles too. 
+
+```{r}
+string_to_matrix <- function(input) {
+    split_input <- input %>% strsplit(split = "\n") %>% unlist() %>% strsplit(split = "\t")
+    ncol <- split_input  %>% map(length) %>% unlist %>% unique
+    if(ncol %>% length > 1){stop("tabs per line unequal")}
+    split_input %>% do.call("c", .) %>% as.numeric() %>% matrix(ncol = ncol, byrow = T)    
+}
+```
+
+Then I've made a couple of function to help me address both part of the challenge
+
+<br>
+
+- #### get_row_div()
+
+Takes a row and returns the result of the division of the only two evenly divisibles in the row. 
+```{r}
+get_row_div <- function(row){
+    row_div <- map(row, function(x){ x/row }) %>% unlist %>% 
+        magrittr::extract(.>1 & . == as.integer(.))
+    if(length(row_div) == 0){ 1 }else{ row_div }
+}
+```
+
+- #### get_checksum()
+
+Applies whatever computation metric is required on each row and returns the sum
+```{r}
+get_checksum <- function(mat, compute_mode = "diffs") {
+  mat %>% apply(1, FUN = switch(compute_mode,
+                                "diffs" = function(x){x %>% na.omit %>% range %>% diff},
+                                "divs" = get_row_div)) %>% sum
+}
+```
+
+
+
+## Test
+```{r}
+# create the example matrix to test
+test_matrix <- matrix(c(5, 1, 9, 5, 7, 5, 3, NA, 2, 4, 6, 8), ncol = 4, byrow = T)
+expect_equal(get_checksum(test_matrix, compute_mode = "diffs"), 18)
+```
+
+## deploy
+
+```{r}
+matrix <- string_to_matrix(input)
+get_checksum(matrix)
+```
+
+
+## Success!
+
+![](../screenshots/Day2_1.png)
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+"Great work; looks like we're on the right track after all. Here's a star for your effort." However, the program seems a little worried. Can programs be worried?
+
+"Based on what we're seeing, it looks like all the User wanted is some information about the evenly divisible values in the spreadsheet. Unfortunately, none of us are equipped for that kind of calculation - most of us specialize in bitwise operations."
+
+It sounds like the goal is to find the only two numbers in each row where one evenly divides the other - that is, where the result of the division operation is a whole number. They would like you to find those numbers on each line, divide them, and add up each line's result.
+
+For example, given the following spreadsheet:
+
+```
+5 9 2 8
+9 4 7 3
+3 8 6 5
+```
+In the first row, the only two numbers that evenly divide are 8 and 2; the result of this division is 4.
+In the second row, the two numbers are 9 and 3; the result is 3.
+In the third row, the result is 2.
+In this example, the sum of the results would be 4 + 3 + 2 = 9.
+
+What is the sum of each row's result in your puzzle input?
+
+# Let's go
+
+## Functions
+
+## Test
+```{r}
+test_matrix2 <- matrix(c(5, 9, 2, 8, 9, 4, 7, 3, 3, 8, 6, 5), ncol = 4, byrow = T)
+expect_equal(get_checksum(test_matrix2, compute_mode = "divs"), 9)
+```
+
+Test the case when the only divisibles result from duplicates
+```{r}
+test_matrix3 <- matrix(c(5, 9, 8, 8, 9, 4, 7, 3, 3, 8, 6, 5), ncol = 4, byrow = T)
+expect_equal(get_checksum(test_matrix3, compute_mode = "divs"), 6)
+```
+
+
+## deploy
+
+```{r}
+get_checksum(matrix, compute_mode = "divs")
+```
+
+## Success!
+
+![](../screenshots/Day2_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

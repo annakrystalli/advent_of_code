@@ -1,0 +1,179 @@
+---
+title: "--- Day 1: Inverse Captcha ---"
+author: "annakrystalli"
+date: 2017-12-01
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+<!-- Add your analysis here -->
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+The night before Christmas, one of Santa's Elves calls you in a panic. "The printer's broken! We can't print the Naughty or Nice List!" By the time you make it to sub-basement 17, there are only a few minutes until midnight. "We have a big problem," she says; "there must be almost fifty bugs in this system, but nothing else can print The List. Stand in this square, quick! There's no time to explain; if you can convince them to pay you in stars, you'll be able to--" She pulls a lever and the world goes blurry.
+
+When your eyes can focus again, everything seems a lot more pixelated than before. She must have sent you inside the computer! You check the system clock: 25 milliseconds until midnight. With that much time, you should be able to collect all fifty stars by December 25th.
+
+Collect stars by solving puzzles. Two puzzles will be made available on each day millisecond in the advent calendar; the second puzzle is unlocked when you complete the first. Each puzzle grants one star. Good luck!
+
+You're standing in a room with "digitization quarantine" written in LEDs along one wall. The only door is locked, but it includes a small interface. "Restricted Area - Strictly No Digitized Users Allowed."
+
+It goes on to explain that you may only leave by solving a captcha to prove you're not a human. Apparently, you only get one millisecond to solve the captcha: too fast for a normal human, but it feels like hours to you.
+
+The captcha requires you to review a sequence of digits (your puzzle input) and **find the sum of all digits that match the next digit in the list**. The list is circular, so the digit after the last digit is the first digit in the list.
+
+For example:
+
+1122 produces a sum of 3 (1 + 2) because the first digit (1) matches the second digit and the third digit (2) matches the fourth digit.
+1111 produces 4 because each digit (all 1) matches the next.
+1234 produces 0 because no digit matches the next.
+91212129 produces 9 because the only digit that matches the next one is the last digit, 9.
+What is the solution to your captcha?
+
+# Let's go
+
+### Packages
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+```
+
+With the help of my colleague [**Phil Tooley**](https://twitter.com/acceleratedsci), I've written a function to call the input for each day in directly from the Advent of Code server. It defaults to inputs for `2017` puzzles and to the path I store my **session cookie** at (inputs are user specific so the user needs to know who you are to give you the right input). But you can override that by supplying a different year to `year` or the path to a `.txt` file containing your session cookie to argument `cookie_path`. See function & more details [here](https://github.com/annakrystalli/advent_of_code/blob/master/R/functions.R).
+
+```{r}
+source(paste0(rprojroot::find_rstudio_root_file(), "/R/functions.R"))
+```
+
+
+## Input
+
+```{r}
+input <- aoc_get_input(day = 1) %>% strsplit(split = numeric(), fixed = T) %>% unlist %>% as.numeric
+```
+
+
+## Functions
+```{r}
+
+get_tally <- function(input, compare = 1) {
+    tally <- 0
+    tally_length <- length(input)
+    input <- c(input, head(input, compare))
+    
+    for(i in 1:tally_length){
+        if(input[i + compare] == input[i]){
+            tally <- tally + input[i]  
+        }else{next}
+    }
+    tally
+}
+
+```
+
+## Test
+```{r, eval = T}
+expect_equal(get_tally(c(1, 1, 2, 2)),3)
+expect_equal(get_tally(c(1, 1, 1, 1)),4)
+expect_equal(get_tally(c(1, 2, 3, 4)),0)
+expect_equal(get_tally(c(9, 1, 2, 1, 2, 1, 2, 9)), 9)
+```
+
+## deploy
+
+```{r}
+get_tally(input)
+```
+
+
+## Success!
+
+![](../screenshots/Day1_1.png)
+
+<br>
+
+# ---- Part 2 ----
+
+
+## Brief
+
+You notice a progress bar that jumps to 50% completion. Apparently, the door isn't yet satisfied, but it did emit a star as encouragement. The instructions change:
+
+Now, instead of considering the next digit, it wants you to **consider the digit halfway around the circular list**. That is, if your list contains 10 items, **only include a digit in your sum if the digit 10/2 = 5** steps forward matches it. Fortunately, your list has an even number of elements.
+
+For example:
+
+- 1212 produces 6: the list contains 4 items, and all four digits match the digit 2 items ahead.
+- 1221 produces 0, because every comparison is between a 1 and a 2.
+- 123425 produces 4, because both 2s match each other, but no other digit has a match.
+- 123123 produces 12.
+- 12131415 produces 4.
+
+What is the solution to your new captcha?
+
+
+
+
+# Let's go
+
+## Test
+```{r, eval = T}
+expect_equal(get_tally(c(1, 2, 1, 2), length(c(1, 2, 1, 2))/2),6)
+expect_equal(get_tally(c(1, 2, 2, 1), 2),0)
+expect_equal(get_tally(c(1, 2, 3, 1, 2, 3), length(c(1, 2, 3, 1, 2, 3))/2),12)
+```
+
+## deploy
+
+
+```{r}
+get_tally(input, length(input)/2)
+```
+
+
+## Success!
+
+![](../screenshots/Day1_2.png)

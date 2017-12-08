@@ -1,0 +1,206 @@
+---
+title: "--- Day 8: I Heard You Like Registers ---"
+author: "annakrystalli"
+date: 2017-12-08
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+You receive a signal directly from the CPU. Because of your recent assistance with jump instructions, it would like you to compute the result of a series of unusual register instructions.
+
+Each instruction consists of several parts: the **register to modify**, whether to **increase or decrease that register's value**, the **amount by which to increase or decrease it**, and a **condition**. If the condition fails, skip the instruction without modifying the register. The registers all start at 0. The instructions look like this:
+
+```
+b inc 5 if a > 1
+a inc 1 if b < 5
+c dec -10 if a >= 1
+c inc -20 if c == 10
+```
+These instructions would be processed as follows:
+
+Because a starts at 0, it is not greater than 1, and so b is not modified.
+a is increased by 1 (to 1) because b is less than 5 (it is 0).
+c is decreased by -10 (to 10) because a is now greater than or equal to 1 (it is 1).
+c is increased by -20 (to -10) because c is equal to 10.
+After this process, the largest value in any register is 1.
+
+You might also encounter <= (less than or equal to) or != (not equal to). However, the CPU doesn't have the bandwidth to tell you what all the registers are named, and leaves that to you to determine.
+
+**What is the largest value in any register after completing the instructions in your puzzle input?**
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 8, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt"))
+```
+
+## Functions
+```{r}
+# Turn input into tibble and then mutate to R expression string
+expressify_input <- function(input) {
+    input <- input %>% 
+        strsplit("\n") %>% unlist %>% 
+        map(~{strsplit(., " ") %>% 
+                unlist  %>% 
+                setNames(c("reg", "s", "n", "cond", "cond_reg", "cond_cnd", "cond_n"))}) %>%
+        do.call("bind_rows", .)  %>% 
+        mutate(s = recode(s, "inc" = "+","dec" = "-"),
+                       cmd = paste(cond,"(", paste0("e$",cond_reg), cond_cnd, cond_n, ")",
+                         paste0("e$",reg), "<-", paste0("e$",reg), s, n,";"))
+}
+
+# evaluate the expressions into a separate environments and return required maximum
+eval_input_df <- function(input, out_max = F) {
+    max.e <- 0
+    e <- new.env(parent = emptyenv())
+    
+    # assign registers to environment e
+    input %>% select(reg, cond_reg) %>% unlist %>% unique %>%
+        lapply(FUN = function(x){assign(x, 0, envir = e)})
+    
+    for(i in 1:nrow(input)){
+        eval(parse(text = input$cmd[i]))
+        max.e <- max(max.e, mget(ls(e), envir = e) %>% unlist %>% max, envir = max.e)
+    }
+    if(out_max){max.e}else{
+        mget(ls(e), envir = e) %>% unlist %>% max}
+}
+```
+
+
+## Test
+```{r}
+test_input <- "b inc 5 if a > 1\na inc 1 if b < 5\nc dec -10 if a >= 1\nc inc -20 if c == 10" %>%
+    expressify_input()
+
+expect_equal(eval_input_df(test_input), 1)
+```
+
+## deploy
+
+```{r}
+
+expressify_input(input) %>% eval_input_df()
+
+```
+```{r}
+system.time(expressify_input(input) %>% eval_input_df())
+```
+
+
+## Success!
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+To be safe, the CPU also needs to know **the highest value held in any register during this process** so that it can decide how much memory to allocate to these operations. For example, in the above instructions, the highest value ever held was 10 (in register c after the third instruction was evaluated).
+
+# Let's go
+
+## Test
+```{r}
+expect_equal(eval_input_df(test_input, out_max = T), 10)
+```
+
+## deploy
+
+```{r}
+expressify_input(input) %>% eval_input_df(out_max = T)
+```
+
+## Success!
+
+![](https://media.giphy.com/media/GwGXoeb0gm7sc/giphy.gif)
+
+
+### What the functions do:
+```{r}
+expressify_input(input) 
+```
+
+
+
+
+## Endnote
+
+I really liked today's. It got me practicing with working with environments and `eval`. It also prompted some useful discussions in the office about the dangers in `eval`, summarised in this xkcd (HT [\@acceleratedsci](https://twitter.com/acceleratedsci))
+
+![](https://imgs.xkcd.com/comics/exploits_of_a_mom.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
