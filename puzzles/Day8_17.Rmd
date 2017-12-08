@@ -100,8 +100,10 @@ input <- aoc_get_input(day = 8, cookie_path = paste0(rprojroot::find_rstudio_roo
 ```
 
 ## Functions
+### Turn input into tibble and then mutate to R expression string
+
+
 ```{r}
-# Turn input into tibble and then mutate to R expression string
 expressify_input <- function(input) {
     input %>% 
         strsplit("\n") %>% unlist %>% 
@@ -114,8 +116,14 @@ expressify_input <- function(input) {
                            paste0("e$",reg), "<-", paste0("e$",reg), s, n,";"))
 }
 
+```
 
-# evaluate the expressions into a separate environments and return required maximum
+
+
+### Evaluate the expressions into a separate environments and return required maximum
+
+
+```{r}
 eval_input_df <- function(input, out_max = F) {
     max.e <- 0
     e <- new.env(parent = emptyenv())
