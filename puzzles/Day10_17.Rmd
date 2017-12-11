@@ -1,7 +1,7 @@
 ---
 title: "--- Day 10: Knot Hash ---"
 author: "annakrystalli"
-date: 2017-12-XX
+date: 2017-12-10
 output: html_notebook
 editor_options: 
   chunk_output_type: inline
