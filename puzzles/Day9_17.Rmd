@@ -78,7 +78,7 @@ Here are some self-contained pieces of garbage:
 - `<{o"i!a,<{i<a>`, which ends at the first `>`.
 
 Here are some examples of whole streams and the number of groups they contain:
-
+```
 - `{}`, 1 group.
 - `{{{}}}`, 3 groups.
 - `{{},{}}`, also 3 groups.
@@ -87,6 +87,7 @@ Here are some examples of whole streams and the number of groups they contain:
 - `{<a>,<a>,<a>,<a>}`, 1 group.
 - `{{<a>},{<a>},{<a>},{<a>}}`, 5 groups.
 - `{{<!>},{<!>},{<!>},{<a>}}`, 2 groups (since all but the last > are canceled).
+```
 
 Your goal is to find the total score for all groups in your input. Each group is assigned a score which is one more than the score of the group that immediately contains it. (The outermost group gets a score of 1.)
 
