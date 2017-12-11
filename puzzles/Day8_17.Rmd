@@ -200,6 +200,13 @@ expressify_input(input)
 ```
 
 
+```{r}
+ls(e)
+
+```
+```{r}
+mget(ls(e), envir = e) %>% unlist
+```
 
 
 ## Endnote

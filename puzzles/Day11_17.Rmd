@@ -1,0 +1,191 @@
+---
+title: "--- Day 11: Hex Ed ---"
+author: "annakrystalli"
+date: 2017-12-XX
+output: html_document
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+Crossing the bridge, you've barely reached the other side of the stream when a program comes up to you, clearly in distress. "It's my child process," she says, "he's gotten lost in an infinite grid!"
+
+Fortunately for her, you have plenty of experience with infinite grids.
+
+Unfortunately for you, it's a hex grid.
+
+The hexagons ("hexes") in this grid are aligned such that adjacent hexes can be found to the north, northeast, southeast, south, southwest, and northwest:
+
+```
+  \ n  /
+nw +--+ ne
+  /    \
+-+      +-
+  \    /
+sw +--+ se
+  / s  \ 
+ 
+```
+
+You have the path the child process took. Starting where he started, you need to determine the fewest number of steps required to reach him. (A "step" means to move from the hex you are in to any adjacent hex.)
+
+For example:
+
+- `ne,ne,ne` is 3 steps away. 
+- `ne,ne,sw,sw` is 0 steps away (back where you started). 
+- `ne,ne,s,s` is 2 steps away (se,se). 
+- `se,sw,se,sw,sw` is 3 steps away (s,s,sw). 
+
+
+# Let's go
+
+
+#### So today is all about the **hex**!
+
+![](https://www.rstudio.com/wp-content/uploads/2015/01/Untitled.001.jpeg)
+
+Back to a nice easy one today is which I keep track of hex moves in a the cartesian coordinate system (ie x, y). All I needed to do was [adapt a previous wandering algorithm](http://annakrystalli.me/advent_of_code/puzzles/Day2_16.html) to include half steps in coordinate space to reflect diagonal moves allowed in a hex configuration.
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day= 11, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+```
+
+## Functions
+```{r}
+hex_dist <- function(input, max_out = F) {
+    steps <- input %>% strsplit(., ",") %>% unlist
+    max_o <- 0
+    loc <- c(0,0)
+    for(move in steps){
+        loc <- loc + switch(move,
+                            "n" = c(1,0),
+                            "ne" = c(0.5, 0.5),
+                            "e" = c(0, 1),
+                            "se" = c(-0.5, 0.5),
+                            "s" = c(-1, 0),
+                            "sw" = c(-0.5, -0.5),
+                            "w" = c(0, -1),
+                            "nw" = c(0.5, -0.5))
+        max_o <- max(max_o, loc %>% abs %>% sum)
+    }
+    if(max_out){max_o}else{
+        loc %>% abs %>% sum
+    }
+}  
+```
+
+## Test
+```{r}
+expect_equal("se,sw,se,sw,sw" %>% hex_dist , 3)
+```
+
+## deploy
+
+```{r}
+input %>% hex_dist 
+```
+
+
+## Success!
+
+![](../screenshots/Day_11_1.png)
+
+<br>
+
+![](http://community.wolfram.com//c/portal/getImageAttachment?filename=vgrid20c.gif&userId=610054)
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+How many steps away is the furthest he ever got from his starting position?
+
+# Let's go
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+input %>% hex_dist(max_out = T)
+```
+
+## Success!
+
+<br>
+
+### And let's not forget the calendar!
+
+![](../screenshots/Cal_11.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template

@@ -1,0 +1,273 @@
+---
+title: "--- Day 9: Stream Processing ---"
+author: "annakrystalli"
+date: 2017-12-08
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+A large stream blocks your path. According to the locals, it's not safe to cross the stream at the moment because it's full of garbage. You look down at the stream; rather than water, you discover that it's a stream of characters.
+
+You sit for a while and record part of the stream (your puzzle input). The characters represent groups - sequences that begin with `{` and end with `}`. **Within a group, there are zero or more other things, separated by commas:** either another group or garbage. Since groups can contain other groups, a **`}` only closes the most-recently-opened unclosed group** - that is, they are **nestable**. Your puzzle input represents a single, large group which itself contains many smaller ones.
+
+Sometimes, instead of a group, you will find garbage. **Garbage begins with `<` and ends with `>`**. Between those angle brackets, almost any character can appear, including `{` and `}`. *Within garbage, < has no special meaning.*
+
+In a futile attempt to clean up the garbage, some program has canceled some of the characters within it using !: inside garbage, **any character that comes after !** should be ignored, including <, >, and even another !.
+
+You don't see any characters that deviate from these rules. Outside garbage, you only find well-formed groups, and garbage always terminates according to the rules above.
+
+Here are some self-contained pieces of garbage:
+
+- `<>`, empty garbage.
+- `<random characters>`, garbage containing random characters.
+- `<<<<>`, because the extra `<` are ignored.
+- `<{!>}>`, because the first `>` is canceled.
+- `<!!>`, because the second `!` is canceled, allowing the `>` to terminate the garbage.
+- `<!!!>>`, because the second `!` and the first `>` are canceled.
+- `<{o"i!a,<{i<a>`, which ends at the first `>`.
+
+Here are some examples of whole streams and the number of groups they contain:
+
+- `{}`, 1 group.
+- `{{{}}}`, 3 groups.
+- `{{},{}}`, also 3 groups.
+- `{{{},{},{{}}}}`, 6 groups.
+- `{<{},{},{{}}>}`, 1 group (which itself contains garbage).
+- `{<a>,<a>,<a>,<a>}`, 1 group.
+- `{{<a>},{<a>},{<a>},{<a>}}`, 5 groups.
+- `{{<!>},{<!>},{<!>},{<a>}}`, 2 groups (since all but the last > are canceled).
+
+Your goal is to find the total score for all groups in your input. Each group is assigned a score which is one more than the score of the group that immediately contains it. (The outermost group gets a score of 1.)
+
+- `{}`, score of 1. 
+- `{{{}}}`, score of 1 + 2 + 3 = 6. 
+- `{{},{}}`, score of 1 + 2 + 2 = 5. 
+- `{{{},{},{{}}}}`, score of 1 + 2 + 3 + 3 + 3 + 4 = 16. 
+- `{<a>,<a>,<a>,<a>}`, score of 1. 
+- `{{<ab>},{<ab>},{<ab>},{<ab>}}`, score of 1 + 2 + 2 + 2 + 2 = 9.  
+- `{{<!!>},{<!!>},{<!!>},{<!!>}}`, score of 1 + 2 + 2 + 2 + 2 = 9.  
+- `{{<a!>},{<a!>},{<a!>},{<ab>}}`, score of 1 + 2 = 3. 
+
+What is the total score for all groups in your input?
+
+# Let's go
+
+Today there was quite a bit of **`REGEX`**
+
+![](http://media.pyweek.org/dl/7/RegExExpress/train_anim2.gif)
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 9, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+
+```
+
+## Functions
+```{r}
+grp_chr_sets <- function (input){
+    input %>% gsub("!.", "", .)  %>% gsub("(<[^>]*>,?)", "", .)
+}
+
+score_sets <- function(input) {
+    chr_sets <-  input %>% grp_chr_sets
+    sets <- chr_sets %>% gregexpr("\\}", .)
+    score <- function(i, chr_sets){
+        substr(chr_sets,1, i -1) %>% str_count("\\{") - 
+            substr(chr_sets,1, i -1) %>% str_count("\\}")
+    }
+    sets %>% unlist %>% map_int(~score(.x, chr_sets)) %>% sum
+}
+```
+
+
+
+
+
+```{r}
+count_junk <- function(input){
+    stream <- input %>% gsub("!.", "", .) %>% strsplit(.,split ="") %>% unlist
+    score <- 0
+    record <- F
+    for(i in 1:length(stream)){
+        c <- stream[i]
+        if(c == "<"){if(record){
+            score <- score + 1
+            next
+        }else{
+            record <- TRUE}
+            next}
+        
+        if(record){
+            if(stream[i] != ">"){
+                score <- score + 1}else{
+                    record <- F
+                }}
+    }
+    score
+} 
+```
+
+
+## Test
+```{r}
+# test ! removing gsub
+expect_equal("<!!e!!>>" %>% gsub("(!.)", "", .) , "<e>>")
+expect_equal("<!!!!>>" %>% gsub("!.", "", .) , "<>>")
+expect_equal("<!!!>>" %>% gsub("!.", "", .) , "<>")
+expect_equal("<!!!>>" %>% gsub("!.", "", .) , "<>")
+
+# test garbage cleaning gsub
+expect_equal("{{<a>},{<a>},{<a>},{<a>}}" %>% gsub("(<[^>]*>)", "", .) , "{{},{},{},{}}")
+expect_equal("{<{},{},{{}}>}" %>% gsub("(<[^>]*>)", "", .) , "{}")
+
+# test group 
+expect_equal("<{o'i!a,<{i<a>" %>% grp_chr_sets, "")
+expect_equal("{<{},{},{{}}>}" %>% grp_chr_sets , "{}")
+expect_equal("{{<!>},{<!>},{<!>},{<a>}}" %>% grp_chr_sets , "{{}}")
+expect_equal("{<a>,<a>,<a>,<a>}" %>% grp_chr_sets , "{}")
+
+expect_equal("{{{},{},{{}}}}"  %>% score_sets, 16)
+expect_equal("{{<ab>},{<ab>},{<ab>},{<ab>}}"  %>% score_sets, 9)
+expect_equal("{{<!!>},{<!!>},{<!!>},{<!!>}}"  %>% score_sets, 9)
+expect_equal("{{<a!>},{<a!>},{<a!>},{<ab>}}"  %>% score_sets, 3)
+
+```
+
+## deploy
+
+```{r}
+input %>% score_sets
+```
+
+
+## Success!
+
+![](../screenshots/Day1_1.png)
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+
+Now, you're ready to remove the garbage.
+
+To prove you've removed it, you need to count all of the characters within the garbage. The leading and trailing < and > don't count, nor do any canceled characters or the ! doing the canceling.
+
+`<>`, 0 characters.
+`<random characters>`, 17 characters.
+`<<<<>`, 3 characters.
+`<{!>}>`, 2 characters.
+`<!!>`, 0 characters.
+`<!!!>>`, 0 characters.
+`<{o"i!a,<{i<a>`, 10 characters.
+
+How many non-canceled characters are within the garbage in your puzzle input?
+
+# Let's go
+
+
+This one really stumped me in parts because I think I was continuously trying to use the wrong tool. 
+
+- I tried regex
+- trying to work with a nested list
+- turn it into json and trying to extract information about the substructure. 
+
+I also managed to develop many solutions that would pass the tests but the result was wrong. I finally gave in an wrote an element by element recording algorithm is 20 mins...and it worked. I don't why I kept thinking there's some better way than building this sort of algorithm. Alas in the end, the simplest approach worked just fine!
+
+Anyroad, I did learn a lot more about regex, the different flavours and thinking about how to extract set nestedness information from a series of curly braces
+
+
+## Test
+```{r}
+expect_equal("<{o'i!a,<{i<a>" %>% count_junk, 10)
+expect_equal("<!!>" %>% count_junk, 0)
+expect_equal("<random characters>" %>% count_junk, 17)
+expect_equal("<!!!>>" %>% count_junk, 0)
+expect_equal("<{!>}>" %>% count_junk, 2)
+expect_equal("<{!><}>" %>% count_junk, 3)
+expect_equal("{<{o'i!a,<{i<a>, <{!><}>}" %>% count_junk, 13)
+```
+
+## deploy
+
+```{r}
+input %>% count_junk
+```
+
+## Success!
+
+![](../screenshots/Day1_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
