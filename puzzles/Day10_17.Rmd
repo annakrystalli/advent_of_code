@@ -267,20 +267,12 @@ So close! **@exunckly_twitter** [vectorxor function](https://github.com/exunckly
 
 I guess that's somewhat cheating 😬 but I'd reached the limit of wracking my brains on AoC for this weekend! Did learn a lot however about computing in general and nice to understand the approaches that go into cryptography.  
 
-## FUNCTIONs
+## FUNCTIONS
+
 ```{r}
 hex.l <- function(input= "1,2,3") {
    c(utf8ToInt(input) , c(17, 31, 73, 47, 23))
 }
-library(withr)
-
-pad <- function(num) {
-    with_options(
-        c(scipen = 999), 
-        str_pad(num, 3, pad = "0")
-    )
-}
-
 hash <- function(input, ...) {
     input %>% 
         knot(v = 0:255, cycles = 64, hex = T) %>% 
