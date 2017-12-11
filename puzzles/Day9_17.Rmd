@@ -68,7 +68,7 @@ In a futile attempt to clean up the garbage, some program has canceled some of t
 You don't see any characters that deviate from these rules. Outside garbage, you only find well-formed groups, and garbage always terminates according to the rules above.
 
 Here are some self-contained pieces of garbage:
-
+```
 - `<>`, empty garbage.
 - `<random characters>`, garbage containing random characters.
 - `<<<<>`, because the extra `<` are ignored.
@@ -76,6 +76,7 @@ Here are some self-contained pieces of garbage:
 - `<!!>`, because the second `!` is canceled, allowing the `>` to terminate the garbage.
 - `<!!!>>`, because the second `!` and the first `>` are canceled.
 - `<{o"i!a,<{i<a>`, which ends at the first `>`.
+```
 
 Here are some examples of whole streams and the number of groups they contain:
 ```
