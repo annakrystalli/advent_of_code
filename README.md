@@ -35,6 +35,9 @@ About:
 - [--- Day 6: Memory Reallocation ---](http://annakrystalli.me/advent_of_code/puzzles/Day6_17.html)
 - [--- Day 7: Recursive Circus ---](http://annakrystalli.me/advent_of_code/puzzles/Day7_17.html)
 - [--- Day 8: I Heard You Like Registers ---](http://annakrystalli.me/advent_of_code/puzzles/Day8_17.nb.html)
+- [--- Day 9: Stream Processing ---](http://annakrystalli.me/advent_of_code/puzzles/Day9_17.nb.html)
+- [--- Day 10: I Heard You Like Registers ---](http://annakrystalli.me/advent_of_code/puzzles/Day10_17.nb.html)
+- [--- Day 11: Hex Ed ---](http://annakrystalli.me/advent_of_code/puzzles/Day11_17.html)
 
 
 
