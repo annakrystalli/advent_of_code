@@ -1,0 +1,313 @@
+---
+title: "--- Day 14: Disk Defragmentation ---"
+author: "annakrystalli"
+date: 2017-12-14
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+
+
+Suddenly, a scheduled job activates the system's disk defragmenter. Were the situation different, you might sit and watch it for a while, but today, you just don't have that kind of time. It's soaking up valuable system resources that are needed elsewhere, and so the only option is to help it finish its task as soon as possible.
+
+The disk in question consists of a 128x128 grid; each square of the grid is either free or used. On this disk, the state of the grid is tracked by the bits in a **sequence of knot hashes**.
+
+<br>
+
+#### A total of **128 knot hashes** are calculated, each corresponding to a **single row in the grid** 
+- **each hash** contains **128 bits** which correspond to **individual grid squares**. 
+    - **Each bit** of a hash indicates whether that square is free **(0) or used (1)**.
+
+***
+
+## Recreate hash from inputs
+
+The **hash inputs** are
+
+- a **key string (your puzzle input)**, 
+- a **dash**
+- a **number from 0 to 127** corresponding to the row. 
+
+### 1. Calculate knot hash for each row (to 32-bit hex)
+
+For example, if your **key string** were **`flqrgnkx`**, then the **first row** would be given by the **bits** of the knot hash of **`flqrgnkx-0`**, the **second row** from the bits of the knot hash of **`flqrgnkx-1`**, and so on until the last row, `flqrgnkx-127`.
+
+- The **output of a knot hash** is traditionally represented by **32 hexadecimal digits**; each of these digits correspond to **4 bits**, for a total of ***4 \* 32 = 128 bits***. 
+
+### 1. Convert to bits (32 Hex to binary)
+
+To convert to bits, **turn each hexadecimal digit to its equivalent binary value**, **high-bit first:** `0` becomes `0000`, `1` becomes `0001`, `e` becomes `1110`, `f` becomes `1111`, and so on; 
+
+a **hash that begins with `a0c2017...` in hexadecimal would begin with `10100000110000100000000101110000...` in binary**.
+
+
+00001010000011000010000000010111
+
+Continuing this process, the first 8 rows and columns for key flqrgnkx appear as follows, using # to denote used squares, and . to denote free ones:
+```
+##.#.#..-->
+.#.#.#.#   
+....#.#.   
+#.#.##.#   
+.##.#...   
+##..#..#   
+.#...#..   
+##.#.##.-->
+|      |   
+V      V   
+```
+
+In this example, 8108 squares are used across the entire 128x128 grid.
+
+Given your actual key string, how many squares are used?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+library(sodium)
+library(BMS)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 14, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+input
+```
+
+## Functions
+```{r}
+knot <- function(l.input = input, v = 0:255, 
+                 skip = 0, cp = 1, cycles = 1, hex = F) {
+    
+    if(hex){l.input <- l.input %>% hex.l} else{
+        l.input <- l.input %>% strsplit(",") %>% unlist %>% as.numeric
+    }
+    # intitialise algorithm
+    lv <- length(v)
+    
+    for(i in rep(1:length(l.input), cycles)){
+        l <- l.input[i] 
+        # twist
+        tc<- cp:(cp - 1 + l) %% lv %>% recode(`0` = lv)
+        v[tc] <- v[rev(tc)]
+        
+        # move cp
+        cp <- (cp + l + skip) %% lv 
+        if (cp == 0){cp <- lv} #fix %% 0s
+        
+        # update params
+        skip <- skip + 1
+        i <- i + 1
+    }
+    v
+}
+hex.l <- function(input= "1,2,3") {
+   c(utf8ToInt(input) , c(17, 31, 73, 47, 23))
+}
+hash <- function(input, ...) {
+    input %>% 
+        knot(v = 0:255, cycles = 64, hex = T) %>% 
+        split(., ceiling(seq_along(.)/16)) %>% 
+        map_int(~reduce(.x, bitwXor)) %>%
+        as.hexmode %>%
+        paste(collapse = "")
+}
+key2sum <- function(x) {
+    x %>% hash %>% paste(collapse = "") %>% BMS::hex2bin() %>% sum
+}
+
+sq_used <- function(key_string) {
+    key_string %>% paste(0:127, sep = "-") %>% map(key2sum) %>% unlist %>% sum
+
+}
+```
+
+## Test
+
+There was an error in the example and example output needed the last `0000`s trimming
+```{r}
+expect_equal(BMS::hex2bin("a0c2017 ") %>% paste(collapse = ""), "1010000011000010000000010111")
+#expect_equal(sq_used("flqrgnkx"), 8186)
+```
+
+## deploy
+
+```{r}
+sq_used(input)
+```
+
+
+## Success!
+
+<div style="width:100%;height:0;padding-bottom:56%;position:relative;"><iframe src="https://giphy.com/embed/fCGnSIe56G1JC" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/satisfying-defragmentation-fCGnSIe56G1JC">via GIPHY</a></p>
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+Now, all the defragmenter needs to know is the number of regions. A region is a group of used squares that are all adjacent, not including diagonals. Every used square is in exactly one region: lone used squares form their own isolated regions, while several adjacent squares all count as a single region.
+
+In the example above, the following nine regions are visible, each marked with a distinct digit:
+
+11.2.3..-->
+.1.2.3.4   
+....5.6.   
+7.8.55.9   
+.88.5...   
+88..5..8   
+.8...8..   
+88.8.88.-->
+|      |   
+V      V   
+Of particular interest is the region marked 8; while it does not appear contiguous in this small view, all of the squares marked 8 are connected when considering the whole 128x128 grid. In total, in this example, 1242 regions are present.
+
+How many regions are present given your key string?
+
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+
+# Let's go
+
+
+```{r}
+
+
+#m <- matrix(c(1, 0, 1, 1, 1, 1, 1,0, 1, 1, 0, 1), ncol = 4, byrow = T)
+
+key2bin <- function(x) {
+    x %>% hash %>% paste(collapse = "") %>% BMS::hex2bin()
+}
+
+
+key2mat <- function(key_string) {
+    key_string %>% paste(0:127, sep = "-") %>% map(key2bin) %>% do.call("rbind", .)
+
+}
+
+group_matrix <- function(m) {
+    mg <- m   
+    mg[,] <- 0
+    xs <- rep(1:nrow(m), each = ncol(m)) 
+    ys <- rep(1:ncol(m), times = nrow(m))
+    for(i in 1:length(xs)){
+        loc <- c(xs[i], ys[i])   
+        g0 <- max(mg) + 1
+        if(m[loc[1], loc[2]] == 0){
+            next
+        }
+        x <- loc[1] -1
+        y <- loc[2] -1
+        gx <- if(x == 0){0}else{mg[x, loc[2]]}
+        gy <- if(y == 0){0}else{mg[loc[1], y]}
+        if(gx == 0 & gy == 0){
+            mg[loc[1], loc[2]] <- g0
+        }else{
+            min_g <- min(c(gx,gy) %>% magrittr::extract(. > 0))
+            m_i <- m   
+            m_i[,] <- F
+            if(gx != 0){
+                m_i <- m_i | (mg == gx)
+            }
+            if(gy != 0){
+                m_i <- m_i | (mg == gy)
+            }
+            m_i[loc[1], loc[2]] <- T
+            mg[m_i] <- min_g
+        }
+        
+    }
+    mg
+}
+
+no_groups <- function(mg) {
+    mg %>% as.vector %>% unique %>% magrittr::extract(. > 0) %>% length
+}
+```
+
+## Test
+```{r}
+m <- key2mat("flqrgnkx")
+expect_equal(m %>% group_matrix %>% no_groups, 1242)
+```
+
+## deploy
+
+```{r}
+input %>% key2mat %>% group_matrix %>% no_groups
+```
+
+## Success!
+
+<div style="width:100%;height:0;padding-bottom:77%;position:relative;"><iframe src="https://giphy.com/embed/1l0xHKZgxd3cA" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/pixel-1l0xHKZgxd3cA">via GIPHY</a></p>
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
