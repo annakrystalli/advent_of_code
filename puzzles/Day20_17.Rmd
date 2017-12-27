@@ -1,0 +1,245 @@
+---
+title: "--- Day 20: Particle Swarm ---"
+author: "annakrystalli"
+date: 2017-12-20
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+Suddenly, the GPU contacts you, asking for help. Someone has asked it to simulate too many particles, and it won't be able to finish them all in time to render the next frame at this rate.
+
+It transmits to you a buffer (your puzzle input) listing each particle in order (starting with particle 0, then particle 1, particle 2, and so on). For each particle, it provides the X, Y, and Z coordinates for the particle's position (p), velocity (v), and acceleration (a), each in the format <X,Y,Z>.
+
+Each tick, all particles are updated simultaneously. A particle's properties are updated in the following order:
+
+- Increase the X velocity by the X acceleration.
+- Increase the Y velocity by the Y acceleration.
+- Increase the Z velocity by the Z acceleration.
+- Increase the X position by the X velocity.
+- Increase the Y position by the Y velocity.
+- Increase the Z position by the Z velocity.
+
+
+Because of seemingly tenuous rationale involving z-buffering, the GPU would like to know which particle will stay closest to position <0,0,0> in the long term. Measure this using the Manhattan distance, which in this situation is simply the sum of the absolute values of a particle's X, Y, and Z position.
+
+For example, suppose you are only given two particles, both of which stay entirely on the X-axis (for simplicity). Drawing the current states of particles 0 and 1 (in that order) with an adjacent a number line and diagram of current X positions (marked in parenthesis), the following would take place:
+
+```
+p=< 3,0,0>, v=< 2,0,0>, a=<-1,0,0>    -4 -3 -2 -1  0  1  2  3  4
+p=< 4,0,0>, v=< 0,0,0>, a=<-2,0,0>                         (0)(1)
+
+p=< 4,0,0>, v=< 1,0,0>, a=<-1,0,0>    -4 -3 -2 -1  0  1  2  3  4
+p=< 2,0,0>, v=<-2,0,0>, a=<-2,0,0>                      (1)   (0)
+
+p=< 4,0,0>, v=< 0,0,0>, a=<-1,0,0>    -4 -3 -2 -1  0  1  2  3  4
+p=<-2,0,0>, v=<-4,0,0>, a=<-2,0,0>          (1)               (0)
+
+p=< 3,0,0>, v=<-1,0,0>, a=<-1,0,0>    -4 -3 -2 -1  0  1  2  3  4
+p=<-8,0,0>, v=<-6,0,0>, a=<-2,0,0>                         (0)  
+```
+At this point, particle 1 will never be closer to <0,0,0> than particle 0, and so, in the long run, particle 0 will stay closest.
+
+Which particle will stay closest to position <0,0,0> in the long term?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 20, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>% 
+    strsplit(., "\n") %>% unlist
+names(input) <- 1:length(input) - 1
+
+```
+
+## Functions
+```{r}
+mh_dist <- function(x, n = 1000){
+    y <- x %>% strsplit(., ",") %>% unlist %>%  gsub("[\\<,\\>,=, a-z]", "", .) %>% as.numeric
+    for(i in 1:n){
+        y[4:6] <- y[4:6] + y[7:9]
+        y[1:3] <- y[1:3] + y[4:6]
+    }
+    y[1:3] %>% abs %>% sum
+}
+
+
+```
+
+## Test
+```{r}
+x <- "p=< 3,0,0>, v=< 2,0,0>, a=<-1,0,0>"
+
+expect_equal(mh_dist(x, 1),4)
+expect_equal(mh_dist(x, 3),3)
+```
+
+## deploy
+
+```{r}
+input %>% map_dbl(mh_dist, n = 2000) %>% which.min() %>% names
+```
+
+
+## Success!
+
+<iframe src="https://giphy.com/embed/oGpoX3f2RkULe" width="480" height="353" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/bill-murray-ghostbusters-harold-ramis-oGpoX3f2RkULe">via GIPHY</a></p>
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+To simplify the problem further, the GPU would like to remove any particles that collide. Particles collide if their positions ever exactly match. Because particles are updated simultaneously, more than two particles can collide at the same time and place. Once particles collide, they are removed and cannot collide with anything else after that tick.
+
+For example:
+
+```
+p=<-6,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>    (0)   (1)   (2)            (3)
+p=< 3,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+p=<-3,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=<-2,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=<-1,0,0>, v=< 1,0,0>, a=< 0,0,0>             (0)(1)(2)      (3)   
+p=< 2,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+p=< 0,0,0>, v=< 3,0,0>, a=< 0,0,0>    
+p=< 0,0,0>, v=< 2,0,0>, a=< 0,0,0>    -6 -5 -4 -3 -2 -1  0  1  2  3
+p=< 0,0,0>, v=< 1,0,0>, a=< 0,0,0>                       X (3)      
+p=< 1,0,0>, v=<-1,0,0>, a=< 0,0,0>
+
+------destroyed by collision------    
+------destroyed by collision------    -6 -5 -4 -3 -2 -1  0  1  2  3
+------destroyed by collision------                      (3)         
+p=< 0,0,0>, v=<-1,0,0>, a=< 0,0,0>
+```
+In this example, particles 0, 1, and 2 are simultaneously destroyed at the time and place marked X. On the next tick, particle 3 passes through unharmed.
+
+How many particles are left after all collisions are resolved?
+
+
+
+# Let's go
+
+```{r}
+track_locs <- function(x, n = 1000){
+    y <- x %>% strsplit(., ",") %>% unlist %>%  gsub("[\\<,\\>,=, a-z]", "", .) %>% as.numeric
+    p <- paste0(y[1:3], collapse = "")
+    for(i in 1:n){
+        y[4:6] <- y[4:6] + y[7:9]
+        y[1:3] <- y[1:3] + y[4:6]
+        
+        p <- c(p, paste0(y[1:3], collapse = ""))
+    }
+    names(p) <- paste0("t", 0:n)
+    p
+}
+
+clean_collisions <- function(input, n = 2000){
+    locs <- input %>% map(track_locs, n = n) %>% do.call("rbind", .)
+    
+    for(i in 1:ncol(locs)){
+        collisions <- locs[which(duplicated(locs[,i])),i] %>% unique
+        locs <- locs[!locs[,i] %in% collisions, ,drop = F]
+    }
+    nrow(locs)
+}
+```
+
+
+## Test
+```{r}
+
+test_input <- c("p=<-6,0,0>, v=< 3,0,0>, a=< 0,0,0>",   
+"p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>", 
+"p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>",    
+"p=< 3,0,0>, v=<-1,0,0>, a=< 0,0,0>")
+
+expect_equal(clean_collisions(test_input, 10), 1)
+```
+
+## deploy
+
+```{r}
+clean_collisions(input, 1000)
+```
+
+## Success!
+
+<iframe src="https://giphy.com/embed/xTiTnzwJoXpg7gdONy" width="480" height="336" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/afv-soccer-hit-inflatable-xTiTnzwJoXpg7gdONy">via GIPHY</a></p>
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
