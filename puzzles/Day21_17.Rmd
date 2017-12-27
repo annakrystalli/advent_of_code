@@ -1,0 +1,329 @@
+---
+title: "--- Day 21: Fractal Art ---"
+author: "annakrystalli"
+date: 2017-12-21
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+You find a program trying to generate some art. It uses a strange process that involves repeatedly enhancing the detail of an image through a set of rules.
+
+The image consists of a two-dimensional square grid of pixels that are either on (#) or off (.). The program always begins with this pattern:
+```
+.#.
+..#
+###
+```
+
+Because the pattern is both 3 pixels wide and 3 pixels tall, it is said to have a size of 3.
+
+Then, the program repeats the following process:
+
+If the size is evenly divisible by 2, break the pixels up into 2x2 squares, and convert each 2x2 square into a 3x3 square by following the corresponding enhancement rule.
+Otherwise, the size is evenly divisible by 3; break the pixels up into 3x3 squares, and convert each 3x3 square into a 4x4 square by following the corresponding enhancement rule.
+Because each square of pixels is replaced by a larger one, the image gains pixels and so its size increases.
+
+The artist's book of enhancement rules is nearby (your puzzle input); however, it seems to be missing rules. The artist explains that sometimes, one must rotate or flip the input pattern to find a match. (Never rotate or flip the output pattern, though.) Each pattern is written concisely: rows are listed as single units, ordered top-down, and separated by slashes. For example, the following rules correspond to the adjacent patterns:
+```
+../.#  =  ..
+          .#
+
+                .#.
+.#./..#/###  =  ..#
+                ###
+
+                        #..#
+#..#/..../#..#/.##.  =  ....
+                        #..#
+                        .##.
+```
+
+When searching for a rule to use, rotate and flip the pattern as necessary. For example, all of the following patterns match the same rule:
+
+```
+.#.   .#.   #..   ###
+..#   #..   #.#   ..#
+###   ###   ##.   .#.
+```
+
+Suppose the book contained the following two rules:
+
+```
+../.# => ##./#../...
+.#./..#/### => #..#/..../..../#..#
+```
+As before, the program begins with this pattern:
+```
+.#.
+..#
+###
+```
+
+The size of the grid (3) is not divisible by 2, but it is divisible by 3. It divides evenly into a single square; the square matches the second rule, which produces:
+
+```
+#..#
+....
+....
+#..#
+```
+
+The size of this enhanced grid (4) is evenly divisible by 2, so that rule is used. It divides evenly into four squares:
+
+```
+#.|.#
+..|..
+--+--
+..|..
+#.|.#
+```
+
+Each of these squares matches the same rule (../.# => ##./#../...), three of which require some flipping and rotation to line up with the rule. The output for the rule is the same in all four cases:
+```
+##.|##.
+#..|#..
+...|...
+---+---
+##.|##.
+#..|#..
+...|...
+```
+
+Finally, the squares are joined into a new grid:
+
+```
+##.##.
+#..#..
+......
+##.##.
+#..#..
+......
+```
+
+Thus, after 2 iterations, the grid contains 12 pixels that are on.
+
+How many pixels stay on after 5 iterations?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 21, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+```
+
+## Functions
+```{r}
+pat2mat <- function(pattern){
+    pattern %>% strsplit("/") %>% unlist %>% strsplit(numeric())  %>% do.call("rbind", .)
+}
+
+mat2pat <- function(m){
+    vec <- cbind(m, "/") %>% t %>% as.vector 
+    paste0(vec[-length(vec)], collapse = "")
+}
+
+flip_h <- function(m){
+    m[,ncol(m):1] %>% mat2pat
+}
+flip_v <- function(m){
+    m[nrow(m):1,] %>% mat2pat
+}
+
+rot_90 <- function(m){
+    t(m[nrow(m):1,]) %>% mat2pat
+}
+
+rot_180 <- function(m){
+    m[nrow(m):1,ncol(m):1] %>% mat2pat
+}
+
+rot_270 <- function(m){
+    t(m)[ncol(m):1,] %>% mat2pat
+}
+
+enhancements <- function(x, all = T){
+    m <- pat2mat(x[1])
+    if(all){
+    tibble(match = c(mat2pat(m), flip_h(m), flip_v(m), 
+                     rot_90(m), rot_180(m), rot_270(m)),
+           enhance = x[2]) %>% unique
+    }else{
+        tibble(match = x[1], enhance = x[2])
+    }
+}
+
+enhancement_tbl <- function(input, all = T){
+    l <- input %>% gsub("#", 1, .) %>% gsub("\\.", 0, .) %>% 
+    strsplit(., "\n") %>% unlist %>% strsplit(., " => ") %>% 
+        map_dfr(enhancements, all)
+}
+
+get_enhancement <- function(px, tbl){
+    tbl %>% filter(match %in% (px %>% mat2pat %>% enhancements(all = T) %>% pull(match))) %>% 
+        pull(enhance) %>% unique
+}
+
+get_rci <- function(m, n){
+    rg <- (row(m)-1) %/% n + 1
+    cg <- (col(m)-1) %/% n + 1
+    (rg-1)*max(cg) + cg
+}
+
+matsplitter<-function(m, div) {
+    rci <-  get_rci(m, div)
+    n <- prod(dim(m))/div/div
+    cv <- unlist(lapply(1:n, function(x) m[rci==x]))
+    dim(cv)<-c(div,div,n)
+    cv
+} 
+
+pix_l2mat <- function(l, npx, exp){
+    nsize <- npx * exp
+    m <- matrix(0, ncol = nsize, nrow = nsize)
+    rci <- get_rci(m, exp)
+    for(i in 1:length(l)){
+        m[rci == i] <- l[[i]]
+    }
+    m
+}
+
+enhance_px <- function(px, tbl){
+    size <- px %>% dim %>% unique
+    if(size %% 2 == 0){
+        div <- 2
+        exp <- 3}else{
+            div <- 3
+            exp <- 4}
+    npx <- size/div
+    apply(matsplitter(px, div), 3, FUN = get_enhancement, tbl = tbl) %>% 
+        lapply(pat2mat) %>% pix_l2mat(npx, exp)
+}
+
+iter_enhancement <- function(iter, input){
+    tbl <- enhancement_tbl(input, all = T)
+    px <- "010/001/111" %>% pat2mat
+    for(i in 1:iter){
+        t0 <- Sys.time()
+        px <- enhance_px(px, tbl)
+        cat(i, "-- t", Sys.time() - t0, "\n")
+    }
+    px
+}
+```
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+iter_enhancement(5, input) %>% as.numeric %>% sum
+```
+
+
+## Success!
+
+<iframe src="https://giphy.com/embed/121s24B7Lo3WCs" width="480" height="322" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/121s24B7Lo3WCs">via GIPHY</a></p>
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+
+# Let's go
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+### NEEDS REVISTING FOR SPEED UP!
+
+I'm going to try and perform the enhancement without building the full matrix, but rather, keep it in the compact `..#/#.#` notation
+```{r}
+iter_enhancement(18, input) %>% as.numeric %>% sum
+```
+
+## Success!
+
+![](../screenshots/Day1_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
