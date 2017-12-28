@@ -1,0 +1,296 @@
+---
+title: "--- Day 24: Electromagnetic Moat ---"
+author: "annakrystalli"
+date: 2017-12-24
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+
+
+The CPU itself is a large, black building surrounded by a bottomless pit. Enormous metal tubes extend outward from the side of the building at regular intervals and descend down into the void. There's no way to cross, but you need to get inside.
+
+No way, of course, other than building a bridge out of the magnetic components strewn about nearby.
+
+Each component has two ports, one on each end. The ports come in all different types, and only matching types can be connected. You take an inventory of the components by their port types (your puzzle input). Each port is identified by the number of pins it uses; more pins mean a stronger connection for your bridge. A 3/7 component, for example, has a type-3 port on one side, and a type-7 port on the other.
+
+Your side of the pit is metallic; a perfect surface to connect a magnetic, zero-pin port. Because of this, the first port you use must be of type 0. It doesn't matter what type of port you end with; your goal is just to make the bridge as strong as possible.
+
+The strength of a bridge is the sum of the port types in each component. For example, if your bridge is made of components 0/3, 3/7, and 7/4, your bridge has a strength of 0+3 + 3+7 + 7+4 = 24.
+
+For example, suppose you had the following components:
+```
+0/2
+2/2
+2/3
+3/4
+3/5
+0/1
+10/1
+9/10
+```
+
+With them, you could make the following valid bridges:
+```
+0/1
+0/1--10/1
+0/1--10/1--9/10
+0/2
+0/2--2/3
+0/2--2/3--3/4
+0/2--2/3--3/5
+0/2--2/2
+0/2--2/2--2/3
+0/2--2/2--2/3--3/4
+0/2--2/2--2/3--3/5
+```
+(Note how, as shown by 10/1, order of ports within a component doesn't matter. However, you may only use each port on a component once.)
+
+Of these bridges, the strongest one is 0/1--10/1--9/10; it has a strength of 0+1 + 1+10 + 10+9 = 31.
+
+What is the strength of the strongest bridge you can make with the components you have available?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+options(stringsAsFactors = F)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 24, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) 
+
+input %>% head
+
+
+
+```
+### Benchmark
+
+Because performance has been of such importance as Advent of Code ramped up and because I should probably know a lot more about `R`s performance and be much better at testing it, I'm using the opportunity to start benchmarking some approaches (I'll be going back, benchmarking and profiling the `part 2`s I'm stuck on due to terrible perfomance when I finish the puzzles I can first).
+
+For this puzzle, I assumed finding which components match the next piece in the under construction bridge will liekly be the most important. So I tested a few approaches of storing and looking up the component element data, including an environment, a data.frame and a tibble. The test was to find the outlooking (ie will be looked up subsequently) element of the components that match the element (`nxt`) we are looking to connect.  
+
+I changed my approach later, stacking all individual elements of each component for easier search but, after checking the benchmarking results, chose to store everything in a `data.frame` because it's fast enough but allows me to link the individual elements of a component to it's key, something I wouldn't be able to do in an `environment hash table`, without the kind of hack I was testing for in the benchmark (ie making unique names out of potential duplicate component element values). While trying to match values in an environment seems super slow too.
+
+```{r}
+library(microbenchmark)
+
+input <- input %>% strsplit(., "\n") %>% unlist %>% strsplit(., "/") %>% map(as.numeric)
+e <- new.env(parent = emptyenv())
+suppressMessages(map2(.x = map(input, 1) %>% make.names(unique = T), 
+     .y = input, 
+     .f = ~assign(.x, .y, envir = e)))
+tbl <- tibble(inp = map_dbl(input, 1), out = map_dbl(input, 2))
+df <- rbind(data.frame(port = map_dbl(input, 1), comps),
+            data.frame(port = map_dbl(input, 2), comps))
+```
+
+
+
+```{r}
+#Let's search for everything with an input of 2
+nxt <- 2
+
+mbm = microbenchmark(
+    env_key = map(mget(grep(paste0("X", nxt, "(\\.[0-9]*)?$"), 
+                        names(e), value = T), envir = e), 2),
+    env_value = unlist(mget(ls(e)[unlist(mget(ls(e), envir = e)) == nxt], envir = e)),
+    tbl_base = tbl[tbl$inp == nxt, 2] %>% unlist,
+    df_base = df[df$inp == nxt, 2],
+    df_base_nm = df[df$inp == nxt, "out"],
+    tbl_dplyr = tbl %>% filter(inp == nxt) %>% pull(out),
+    times=50
+)
+
+summary(mbm) %>% arrange(mean)
+```
+
+## Functions
+
+When it came to the functions, I'm not gonna lie. I tried some pretty crazy stuff, thinking I might be able to sample enough from possible configurations to get the strongest bridge. I even trying to build some sort of weighting score for selecting the next piece but it was slow and didn't work (I think AoC kicked me off at some point thinking I was just guessing! Well, I guess I was!)
+
+It soon became clear that the most efficient way would be to just calculate all combos that run out of components to reuse. In the end, I'm actually quite pleased with what I came up, a function that recurses the search for a match to each of the matches in a call through `lapply`, finally assigning the bridge strength to a collecting environment when the recursion runs out of matches! 
+
+```{r}
+make_df <- function(input){
+    input <- input %>% strsplit(., "\n") %>% unlist %>% strsplit(., "/") %>% map(as.numeric)
+    comps <- paste0(map_dbl(input, 1), "/",  map_dbl(input, 2))
+    rbind(data.frame(port = map_dbl(input, 1), comps),
+          data.frame(port = map_dbl(input, 2), comps)) %>% 
+        arrange(comps) %>% .[!duplicated(.),]
+} 
+
+build_bridges <- function(bridge.sf = NULL, port = 0, df, envir = bridges){
+
+    avail <- df[df$port == port, "comps"] %>% .[!. %in% bridge.sf]
+    
+    if(length(avail) != 0){
+        solid <- strsplit(avail, "/") %>% map_lgl(~.x[1] == .x[2])
+        if(any(solid)){
+            avail <- avail[solid]
+        }else{
+           port <- df[df$comps %in% avail & df$port != port, "port"] 
+        }
+        mapply(FUN = build_bridges, 
+               bridge.sf = map(avail, ~c(bridge.sf, .x)),
+               port = port,
+               MoreArgs = list(df = df, envir = envir))
+    }else{
+        assign(paste0(bridge.sf, collapse = "-"), 
+               eval(parse(text = paste0(gsub("/", "+", bridge.sf), collapse = "+"))),
+               envir = envir)  
+    }
+}
+```
+
+
+## Test
+```{r}
+test_input <- "0/2\n2/2\n2/3\n3/4\n3/5\n0/1\n10/1\n9/10"
+
+expect_equal({
+    df <- make_df(test_input)
+    test_bridges <- new.env(parent = emptyenv())
+    build_bridges(bridge.sf = NULL, port = 0, df, envir = test_bridges)
+    mget(ls(test_bridges), envir = test_bridges) %>% unlist %>% max},
+    31)
+
+mget(ls(test_bridges), envir = test_bridges)
+```
+
+## deploy
+
+```{r}
+df <- make_df(input)
+bridges <- new.env(parent = emptyenv())
+build_bridges(bridge.sf = NULL, port = 0, df)
+mget(ls(bridges), envir = bridges) %>% unlist %>% max
+```
+
+
+## Success!
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+The bridge you've built isn't long enough; you can't jump the rest of the way.
+
+In the example above, there are two longest bridges:
+```
+0/2--2/2--2/3--3/4
+0/2--2/2--2/3--3/5
+```
+Of them, the one which uses the 3/5 component is stronger; its strength is `0+2 + 2+2 + 2+3 + 3+5 = 19`.
+
+What is **the strength of the longest bridge you can make?** If you can make multiple bridges of the longest length, pick the strongest one.
+
+
+
+# Let's go
+
+## Functions
+
+Luckily, although I was pretty sure I was adding to the computational load, my dislike for non traceability paid off in the end and I was able to extract the lengths and strengths of the bridges from the full keys I had stored the strengths under without re-running anything. 
+
+```{r}
+bridge_length <- function(x){
+    strsplit(x, "-") %>% unlist %>% length
+}
+
+get_longest_strength <- function(envir = bridges){
+    lengths <- names(envir) %>% map_dbl(bridge_length)
+    mget(names(envir), envir = envir)[lengths == max(lengths)] %>% unlist %>% max   
+}
+```
+
+
+
+## Test
+```{r}
+expect_equal(get_longest_strength(test_bridges), 19)
+```
+
+## deploy
+
+```{r}
+get_longest_strength()
+```
+
+## Success!
+
+<iframe src="https://giphy.com/embed/As2kzoG579gvS" width="480" height="270" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/bridge-As2kzoG579gvS">via GIPHY</a></p>
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
