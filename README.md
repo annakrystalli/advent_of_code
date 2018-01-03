@@ -39,12 +39,17 @@ About:
 - [--- Day 10: Knot Hash ---](http://annakrystalli.me/advent_of_code/puzzles/Day10_17.nb.html)
 - [--- Day 11: Hex Ed ---](http://annakrystalli.me/advent_of_code/puzzles/Day11_17.html)
 - [--- Day 12: Digital Plumber ---](http://annakrystalli.me/advent_of_code/puzzles/Day12_17.nb.html)
-- [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
+- [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
 - [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.html)
+- [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 20: Particle Swarm ---](http://annakrystalli.me/advent_of_code/puzzles/Day20_17.nb.html)
 - [--- Day 21: Fractal Art ---](http://annakrystalli.me/advent_of_code/puzzles/Day21_17.nb.html)
 - [--- Day 23: Coprocessor Conflagration ---](http://annakrystalli.me/advent_of_code/puzzles/Day23_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 24: Electromagnetic Moat ---](http://annakrystalli.me/advent_of_code/puzzles/Day24_17.nb.html)
 - [--- Day 24: Electromagnetic Moat ---](http://annakrystalli.me/advent_of_code/puzzles/Day24_17.nb.html)
 
 <br>
