@@ -41,9 +41,11 @@ About:
 - [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
 - [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.html)
 - [--- Day 20: Particle Swarm ---](http://annakrystalli.me/advent_of_code/puzzles/Day20_17.nb.html)
-- [--- Day 21: Fractal Art ---](http://annakrystalli.me/advent_of_code/puzzles/Day21_17.html)
+- [--- Day 21: Fractal Art ---](http://annakrystalli.me/advent_of_code/puzzles/Day21_17.nb.html)
+- [--- Day 24: Electromagnetic Moat ---](http://annakrystalli.me/advent_of_code/puzzles/Day24_17.nb.html)
 
 <br>
+
 
 ## aocoder pkg
 
