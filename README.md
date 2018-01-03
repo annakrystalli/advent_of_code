@@ -41,7 +41,7 @@ About:
 - [--- Day 12: Digital Plumber ---](http://annakrystalli.me/advent_of_code/puzzles/Day12_17.nb.html)
 - [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
-- [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.html)
+- [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.nb.html)
 - [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 13: Packet Scanners ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
