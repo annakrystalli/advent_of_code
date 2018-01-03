@@ -42,6 +42,7 @@ About:
 - [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.html)
 - [--- Day 20: Particle Swarm ---](http://annakrystalli.me/advent_of_code/puzzles/Day20_17.nb.html)
 - [--- Day 21: Fractal Art ---](http://annakrystalli.me/advent_of_code/puzzles/Day21_17.nb.html)
+- [--- Day 23: Coprocessor Conflagration ---](http://annakrystalli.me/advent_of_code/puzzles/Day23_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 24: Electromagnetic Moat ---](http://annakrystalli.me/advent_of_code/puzzles/Day24_17.nb.html)
 
 <br>
