@@ -38,6 +38,8 @@ About:
 - [--- Day 9: Stream Processing ---](http://annakrystalli.me/advent_of_code/puzzles/Day9_17.nb.html)
 - [--- Day 10: Knot Hash ---](http://annakrystalli.me/advent_of_code/puzzles/Day10_17.nb.html)
 - [--- Day 11: Hex Ed ---](http://annakrystalli.me/advent_of_code/puzzles/Day11_17.html)
+- [--- Day 12: Digital Plumber ---](http://annakrystalli.me/advent_of_code/puzzles/Day12_17.nb.html)
+- [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
 - [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
 - [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.html)
 - [--- Day 20: Particle Swarm ---](http://annakrystalli.me/advent_of_code/puzzles/Day20_17.nb.html)
