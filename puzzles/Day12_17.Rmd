@@ -1,0 +1,205 @@
+---
+title: "--- Day 12: Digital Plumber ---"
+author: "annakrystalli"
+date: 2017-12-12
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis', warning=FALSE}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+--- Day 12: Digital Plumber ---
+
+Walking along the memory banks of the stream, you find a small village that is experiencing a little confusion: some programs can't communicate with each other.
+
+Programs in this village communicate using a fixed system of pipes. Messages are passed between programs using these pipes, but most programs aren't connected to each other directly. Instead, programs pass messages between each other until the message reaches the intended recipient.
+
+For some reason, though, some of these messages aren't ever reaching their intended recipient, and the programs suspect that some pipes are missing. They would like you to investigate.
+
+You walk through the village and record the ID of each program and the IDs with which it can communicate directly (your puzzle input). Each program has one or more programs with which it can communicate, and these pipes are bidirectional; if 8 says it can communicate with 11, then 11 will say it can communicate with 8.
+
+You need to figure out how many programs are in the group that contains program ID 0.
+
+For example, suppose you go door-to-door like a travelling salesman and record the following list:
+
+```
+0 <-> 2
+1 <-> 1
+2 <-> 0, 3, 4
+3 <-> 2, 4
+4 <-> 2, 3, 6
+5 <-> 6
+6 <-> 4, 5
+
+```
+
+In this example, the following programs are in the group that contains program ID 0:
+
+
+Program 0 by definition.
+Program 2, directly connected to program 0.
+Program 3 via program 2.
+Program 4 via program 2.
+Program 5 via programs 6, then 4, then 2.
+Program 6 via programs 4, then 2.
+
+Therefore, a total of 6 programs are in this group; all but program 1, which has a pipe that connects it to itself.
+
+How many programs are in the group that contains program ID 0?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+library(igraph)
+library(magrittr)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 12, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt"))
+ 
+```
+
+## Functions
+```{r}
+e_df <- function(x) {
+    x <- x %>% strsplit(.," <-> ") %>% unlist %>% strsplit(.,", ?")
+    tibble(n1 = x[[1]], n2 = x[[2]])    
+}
+to_g <- function(input) {
+ input %>% 
+    str_split("\n") %>% unlist %>% 
+        map_dfr(e_df) %>% 
+        graph_from_data_frame(directed = F)   
+}
+group_n <- function(input, v = "0") {
+    g <- to_g(input)
+    distances(g, v = v, to=V(g), weights=NA) %>% 
+        is.infinite() %>% `!` %>% sum
+    }
+
+```
+
+## Test
+```{r}
+test_input <- "0 <-> 2\n1 <-> 1\n2 <-> 0, 3, 4\n3 <-> 2, 4\n4 <-> 2, 3, 6\n5 <-> 6\n6 <-> 4, 5"
+expect_equal(group_n(test_input),6)
+group_n(test_input)
+
+test_input %>% to_g %>% plot
+```
+
+## deploy
+
+```{r}
+group_n(input)
+```
+
+```{r}
+g <- input %>% to_g 
+```
+
+# plot
+```{r}
+l <- g %>% layout_randomly 
+g %>% plot(layout=l, vertex.label=NA, vertex.size=3)
+```
+
+
+## Success!
+
+![](../screenshots/Day1_1.png)
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+
+# Let's go
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+
+input %>% to_g %>% clusters %>% `$`("no")
+```
+
+## Success!
+
+![](../screenshots/Day1_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
