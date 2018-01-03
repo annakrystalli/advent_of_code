@@ -1,0 +1,231 @@
+---
+title: "--- Day 23: Coprocessor Conflagration ---"
+author: "annakrystalli"
+date: 2017-12-23
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+
+You decide to head directly to the CPU and fix the printer from there. As you get close, you find an experimental coprocessor doing so much work that the local programs are afraid it will halt and catch fire. This would cause serious issues for the rest of the computer, so you head in and see what you can do.
+
+The code it's running seems to be a variant of the kind you saw recently on that tablet. The general functionality seems very similar, but some of the instructions are different:
+
+`set X Y` sets register X to the value of Y.
+`sub X Y` decreases register X by the value of Y.
+`mul X Y` sets register X to the result of multiplying the value contained in register X by the value of Y.
+`jnz X Y` **jumps with an offset of the value of Y**, but **only if the value of X is not zero**. (An offset of 2 skips the next instruction, an offset of -1 jumps to the previous instruction, and so on.)
+
+Only the instructions listed above are used. The **eight registers here, named a through h, all start at `0`.**
+
+The coprocessor is currently set to some kind of debug mode, which allows for testing, but prevents it from doing any meaningful work.
+
+If you run the program (your puzzle input), how many times is the mul instruction invoked?
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, eval=FALSE}
+library(devtools)
+install_github("annakrystalli/aocodeR")
+```
+
+
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 23, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>% 
+    strsplit(., "\n") %>% unlist %>% 
+    strsplit(., " ")
+input %>% head
+```
+
+## Functions
+```{r}
+value.Y <- function(Y){
+    Y <- type.convert(Y, as.is = T)
+    if(class(Y) == "character"){as.numeric(get(Y, envir = e))}else{as.numeric(Y)}
+}
+
+#expect_equal(,)
+create_inst_frm <- function(f, envir = e){
+    
+    f$set <- function(X, Y){
+        assign(X, value.Y(Y), envir = e)    
+    }
+    f$sub <- function(X, Y){
+        assign(X, get(X, envir = e) - value.Y(Y), envir = e)
+    }
+    f$mul <- function(X, Y){
+        assign(X, get(X, envir = e) * value.Y(Y), envir = e)
+        f$mul_track <- f$mul_track + 1
+    }
+    f$jnz <- function(X, Y){
+        if(value.Y(X) != 0){
+            assign("i", (get("i", envir = f) + value.Y(Y) - 1), envir = f)}
+    }
+}
+
+run_inst <- function(input, f) {
+      
+    f$i <- 1
+    while((1 <= f$i & f$i <= length(input))){
+            #cat("i = ", i, " --- f$i = ", f$i, "\n\n")
+        #input[[f$i]]
+        inst <- input[[f$i]]
+        f[[inst[1]]](inst[2], inst[3])
+        f$i <- f$i + 1
+        #i <- i + 1
+    }
+    cat("END")
+}
+
+```
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+e <- new.env(parent = emptyenv())
+f <- new.env(parent = emptyenv())
+map(.x = letters[1:8], .f = ~assign(.x, 0, envir = e))
+f$mul_track <- 0
+
+create_inst_frm(f)
+run_inst(input, f)
+f$mul_track
+```
+
+
+## Success!
+
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+# `r emojifont::emoji('heavy_exclamation_mark')` HELP NEEDED `r emojifont::emoji('heavy_exclamation_mark')`
+### Too slow or caught in infinite loop? 
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+Now, it's time to fix the problem.
+
+The debug mode switch is wired directly to register a. You flip the switch, which makes register a now start at 1 when the program is executed.
+
+Immediately, the coprocessor begins to overheat. Whoever wrote this program obviously didn't choose a very efficient implementation. You'll need to optimize the program if it has any hope of completing before Santa needs that printer working.
+
+The coprocessor's ultimate goal is to determine the final value left in register h once the program completes. Technically, if it had that... it wouldn't even need to run the program.
+
+After setting register a to 1, if the program were to run to completion, what value would be left in register h?
+
+
+
+# Let's go
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+Deploying just ends up runing forever
+
+```{r}
+e <- new.env(parent = emptyenv())
+f <- new.env(parent = emptyenv())
+map(.x = letters[1:8], .f = ~assign(.x, 0, envir = e))
+f$mul_track <- 0
+e$a <- 1
+
+create_inst_frm(f)
+run_inst(input, f)
+e$h
+```
+
+### Reproducible version of my input
+
+```{r}
+dput(aoc_get_input(day = 23, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")))
+```
+
+
+
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
