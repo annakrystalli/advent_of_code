@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r last-updated, echo=FALSE, results='asis'}
+```{r last-updated, echo=FALSE, results='asis', warning=FALSE}
 # Insert the date the file was last updated
 cat(sprintf("**Last updated:** %s", Sys.Date()))
 ```
@@ -210,7 +210,7 @@ In what order are the programs standing after their billion dances?
 ## My reproducible input
 ```{r}
 dput(aoc_get_input(day = 16, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
-                                                 "/secrets/session_cookie.txt"))
+                                                 "/secrets/session_cookie.txt")))
 ```
 
 
