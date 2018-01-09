@@ -345,7 +345,12 @@ severity_trip(input, delay = 0, severity = T)
 # ---- Part 2 ----
 
 # `r emojifont::emoji('heavy_exclamation_mark')` HELP NEEDED `r emojifont::emoji('heavy_exclamation_mark')`
-### Too slow or caught in infinite loop? 
+#### Too slow or caught in infinite loop? 
+
+> **Any feedback? let me know [here](https://github.com/annakrystalli/advent_of_code/issues/2)!**
+
+***
+
 
 ## Brief
 <!-- Insert Part 2 of the puzzle brief here -->
