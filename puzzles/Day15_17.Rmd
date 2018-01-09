@@ -1,8 +1,10 @@
 ---
-title: "--- XXX Puzzle Title XXXX ---"
+title: "--- Day 15: Dueling Generators ---"
 author: "annakrystalli"
-date: 2017-12-XX
-output: html_document
+date: 2017-12-15
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r knitr-opts-chunk, include=FALSE}
@@ -131,14 +133,6 @@ next_int <- function(c, f) {
     (c * f) %% 2147483647
 }
 
-
-next_int2 <- function(c, f, d) {
-    c <- (c * f) %% 2147483647 
-    while(c %% d != 0){
-        c <- (c * f) %% 2147483647
-    }else{c}
-}
-
 matches <- function(n, A = 65, B = 8921){
     match <- 0
     current <- c(A, B)
@@ -147,33 +141,17 @@ matches <- function(n, A = 65, B = 8921){
         match <- match + (bitwAnd(current[1],0xffff) == bitwAnd(current[2],0xffff))
     }
     match}
-        
- matches2 <- function(n, A = 65, B = 8921){
-    match <- 0
-    current <- c(A, B)
-    for(i in 1:n){
-        current <- c(next_int2(current[1], f = 16807, d = 4), next_int2(current[2], f = 48271, d= 8))
-        match <- match + (bitwAnd(current[1],0xffff) == bitwAnd(current[2],0xffff))
-    }
-    match}      
 
 ```
 
 ## Test
 ```{r}
-
-
 expect_equal(matches(n = 5),1)
 ```
 
 ## deploy
 
 ```{r}
-t0 <- Sys.time()
-m <- matches(n = 40000000)
-Sys.time() - t0
-
-
 matches(n = 40000000, A = 516, B = 190)
 ```
 
@@ -282,7 +260,7 @@ matches2(n = 5000000, A = 516, B = 190)
 
 ## Success!
 
-![](../screenshots/Day1_2.png)
+
 
 <br>
 
