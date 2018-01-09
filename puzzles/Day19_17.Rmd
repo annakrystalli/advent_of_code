@@ -1,0 +1,217 @@
+---
+title: "--- Day 19: A Series of Tubes ---"
+author: "annakrystalli"
+date: 2017-12-19
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r knitr-opts-chunk, include=FALSE}
+# Update knitr chunk options
+# https://yihui.name/knitr/options/#chunk-options
+knitr::opts_chunk$set(
+  comment = NA,
+  fig.align = "center",
+  tidy = FALSE,
+  fig.path = paste0("figure/", knitr::current_input(), "/")
+)
+```
+
+```{r last-updated, echo=FALSE, results='asis'}
+# Insert the date the file was last updated
+cat(sprintf("**Last updated:** %s", Sys.Date()))
+```
+
+```{r code-version, echo=FALSE, results='asis'}
+# Insert the code version (Git commit SHA1) if Git repository exists and R
+# package git2r is installed
+if(requireNamespace("git2r", quietly = TRUE)) {
+  if(git2r::in_repository()) {
+    code_version <- substr(git2r::commits()[[1]]@sha, 1, 7)
+  } else {
+    code_version <- "Unavailable. Initialize Git repository to enable."
+  }
+} else {
+  code_version <- "Unavailable. Install git2r package to enable."
+}
+cat(sprintf("**Code version:** %s", code_version))
+rm(code_version)
+```
+
+
+> [***See more puzzles***](http://annakrystalli.me/advent_of_code/)
+
+[**Advent of Code**](https://adventofcode.com/2017/)
+
+
+## Session information
+
+<!-- Insert the session information into the document -->
+```{r session-info}
+sessionInfo()
+```
+
+
+## Brief
+
+<!-- Insert Part 1 of the puzzle brief here -->
+
+Somehow, a network packet got lost and ended up here. It's trying to follow a routing diagram (your puzzle input), but it's confused about where to go.
+
+Its starting point is just off the top of the diagram. Lines (drawn with |, -, and +) show the path it needs to take, starting by going down onto the only line connected to the top of the diagram. It needs to follow this path until it reaches the end (located somewhere within the diagram) and stop there.
+
+Sometimes, the lines cross over each other; in these cases, it needs to continue going the same direction, and only turn left or right when there's no other option. In addition, someone has left letters on the line; these also don't change its direction, but it can use them to keep track of where it's been. For example:
+
+```
+     |          
+     |  +--+    
+     A  |  C    
+ F---|----E|--+ 
+     |  |  |  D 
+     +B-+  +--+ 
+```
+
+Given this diagram, the packet needs to take the following path:
+
+Starting at the only line touching the top of the diagram, it must go down, pass through `A`, and continue onward to the first `+`.
+
+Travel right, up, and right, passing through `B` in the process.
+
+Continue down (collecting `C`), right, and up (collecting `D`).
+
+Finally, go all the way left through `E` and stopping at `F`.
+
+Following the path to the end, the letters it sees on its path are `ABCDEF`.
+
+The little packet looks up at you, hoping you can help it find the way. What letters will it see (in the order it would see them) if it follows the path? (The routing diagram is very wide; make sure you view it without line wrapping.)
+
+
+
+# Let's go
+
+### Packages & functions
+```{r, message = F}
+library(tidyverse)
+library(testthat)
+library(aocodeR)
+```
+
+
+## Input
+
+<!-- Supply day. cookie_path defaults to path in my project -->
+```{r}
+input <- aoc_get_input(day = 19, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")) %>% 
+    strsplit(., "\n") %>% unlist
+
+input %>% head()
+```
+
+## Functions
+```{r}
+library(prodlim)
+
+input_to_m <- function(input){
+    m_i <- input %>% strsplit(., numeric()) %>% map(~ pad_row(.x)) %>% do.call("rbind", .)
+    m <- matrix(" ", nrow = nrow(m_i) + 2, ncol = ncol(m_i) + 2)
+    m[2:(1 + nrow(m_i)), 2:(1 + ncol(m_i))] <- m_i
+    m
+}
+
+pad_row <- function(x){
+    if(length(x) < 201){
+        p <- rep(" ", 201 - length(x))
+        if(x[1] != " "){x <- c(p, x)}else{
+            x <- c(x, p) 
+        }
+    }
+    x
+}
+
+start <- function(m) {
+  mv$loc <- c(2, which(m[2,] == "|")) 
+  mv$move <- c(1, 0)
+  mv$trace <- NULL
+  mv$end <- F
+  mv$moves <- 1
+}
+
+move <- function(m, return = "trace") {
+    next_loc <- mv$loc + mv$move
+    next_val <- m[next_loc[1], next_loc[2]]
+    
+    while(next_val != " ") {
+        if(grepl("[A-Z]", next_val)){
+            mv$trace <- paste0(mv$trace, next_val)
+        }
+        mv$loc <- next_loc
+        next_loc <- next_loc + mv$move
+        mv$moves <- mv$moves + 1
+        next_val <- m[next_loc[1], next_loc[2]]
+    }
+    scan_next(m)
+    if(mv$end){return(mv[[return]])}else{move(m, return)}
+}
+
+scan_next <- function(m){
+    moves <- matrix(c(0,0,-1,1, -1,1,0,0), ncol = 2)
+    scan_locs <- moves[-prodlim::row.match(mv$move * -1, moves),]
+    r <- which(m[t(t(scan_locs) + mv$loc)] != " ")
+    if(length(r) == 0){mv$end <- T
+    }else{
+        mv$move <- scan_locs[r,]}
+}
+```
+
+## deploy
+
+```{r}
+m <- input_to_m(input)
+mv <- new.env(parent = emptyenv())
+start(m)
+move(m)
+```
+
+
+## Success!
+
+![](../screenshots/Day1_1.png)
+
+<br>
+
+***
+
+# ---- Part 2 ----
+
+
+## Brief
+<!-- Insert Part 2 of the puzzle brief here -->
+
+
+# Let's go
+
+## Test
+```{r}
+#expect_equal(,)
+```
+
+## deploy
+
+```{r}
+m <- input_to_m(input)
+mv <- new.env(parent = emptyenv())
+start(m)
+move(m, return = "moves")
+```
+
+## Success!
+
+![](../screenshots/Day1_2.png)
+
+<br>
+
+***
+
+template based on the [workflowr](https://github.com/jdblischak/workflowr) standalone template
