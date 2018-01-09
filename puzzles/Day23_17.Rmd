@@ -175,6 +175,12 @@ f$mul_track
 # `r emojifont::emoji('heavy_exclamation_mark')` HELP NEEDED `r emojifont::emoji('heavy_exclamation_mark')`
 ### Too slow or caught in infinite loop? 
 
+#### Too slow 
+
+> **Any feedback? let me know [here](https://github.com/annakrystalli/advent_of_code/issues/6)!**
+
+***
+
 
 ## Brief
 <!-- Insert Part 2 of the puzzle brief here -->
@@ -211,7 +217,6 @@ e$a <- 1
 
 create_inst_frm(f)
 run_inst(input, f)
-e$h
 ```
 
 ### Reproducible version of my input
