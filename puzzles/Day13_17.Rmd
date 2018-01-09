@@ -374,6 +374,10 @@ input %>% min_delay
 ```
 
 
+```{r}
+dput(aoc_get_input(day = 13, cookie_path = paste0(rprojroot::find_rstudio_root_file(),
+                                                 "/secrets/session_cookie.txt")))
+```
 
 <br>
 
