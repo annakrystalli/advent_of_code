@@ -43,9 +43,9 @@ About:
 - [--- Day 14: Disk Defragmentation ---](http://annakrystalli.me/advent_of_code/puzzles/Day14_17.nb.html)
 - [--- Day 15: Dueling Generators ---](http://annakrystalli.me/advent_of_code/puzzles/Day15_17.nb.html)
 - [--- Day 16: Permutation Promenade ---](http://annakrystalli.me/advent_of_code/puzzles/Day16_17.nb.html) ‼️ **HELP NEEDED** ‼️
-- [--- Day 17: Spinlock ---](http://annakrystalli.me/advent_of_code/puzzles/Day18_17.nb.html) ‼️ **HELP NEEDED** ‼️
-- [--- Day 18: Duet ---](http://annakrystalli.me/advent_of_code/puzzles/Day19_17.nb.html)
-- [--- Day 19: A Series of Tubes ---](http://annakrystalli.me/advent_of_code/puzzles/Day13_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 17: Spinlock ---](http://annakrystalli.me/advent_of_code/puzzles/Day17b_17.nb.html) ‼️ **HELP NEEDED** ‼️
+- [--- Day 18: Duet ---](http://annakrystalli.me/advent_of_code/puzzles/Day18_17.nb.html)
+- [--- Day 19: A Series of Tubes ---](http://annakrystalli.me/advent_of_code/puzzles/Day19_17.nb.html) ‼️ **HELP NEEDED** ‼️
 - [--- Day 20: Particle Swarm ---](http://annakrystalli.me/advent_of_code/puzzles/Day20_17.nb.html)
 - [--- Day 21: Fractal Art ---](http://annakrystalli.me/advent_of_code/puzzles/Day21_17.nb.html)
 - [--- Day 23: Coprocessor Conflagration ---](http://annakrystalli.me/advent_of_code/puzzles/Day23_17.nb.html) ‼️ **HELP NEEDED** ‼️
